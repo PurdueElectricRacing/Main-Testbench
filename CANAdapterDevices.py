@@ -34,7 +34,7 @@ class CANDapterDevice(GenericCANAdapterDevice):
         if(data_length % 2 == 1):
             raise ValueError('Invalid data lenght provided to CAN message')
 
-        self.sendSerialMessage('T%(id)s%(length)s%(data)x\r' % {
+        self.sendSerialMessage('T%(id)s%(length)s%(data)x' % {
             'id': can_id,
             'length': data_length,
             'data': message
