@@ -1,6 +1,6 @@
-from CANAdapterDevices import CANDapterDevice
+from CANAdapterDevices import SerialCANDapterDevice
 
-canDapter = CANDapterDevice()
+canDapter = SerialCANDapterDevice()
 
 # Set bitrate to 500Kbit and open CANDapter
 canDapter.sendSerialMessage('S6')

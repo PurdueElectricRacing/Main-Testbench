@@ -1,6 +1,19 @@
 import serial
 
 
+class CANFrame:
+    def __init__(self, m_id, m_timestamp, m_data):
+        self.id = m_id
+        self.data = m_data
+        self.timestamp = m_timestamp
+        self.length = len(str(canFrame.data)) / 2
+
+        if(self.length % 2 == 1):
+            raise ValueError(
+                'Invalid data lenght provided to CANFrame object.'
+                )
+
+
 class GenericCANAdapterDevice:
     def __init__(self):
         pass
@@ -15,7 +28,7 @@ class GenericCANAdapterDevice:
         pass
 
 
-class CANDapterDevice(GenericCANAdapterDevice):
+class SerialCANDapterDevice(GenericCANAdapterDevice):
     def __init__(self,
                  port='/dev/ttyUSB0',
                  baudrate=2500000,
@@ -28,16 +41,11 @@ class CANDapterDevice(GenericCANAdapterDevice):
     def sendSerialMessage(self, message):
         self.canDapterDevice.write(message + '\r')
 
-    def sendCANMessage(self, can_id, message):
-        data_length = len(str(message)) / 2
-
-        if(data_length % 2 == 1):
-            raise ValueError('Invalid data lenght provided to CAN message')
-
+    def sendCANMessage(self, canFrame):
         self.sendSerialMessage('T%(id)s%(length)s%(data)x' % {
-            'id': can_id,
-            'length': data_length,
-            'data': message
+            'id': canFrame.id,
+            'length': canFrame.length,
+            'data': canFrame.data
         })
 
     def readCANMessage(self):
@@ -48,9 +56,8 @@ class CANDapterDevice(GenericCANAdapterDevice):
         m_message = message[4:-4]
         m_time_stamp = str(datetime.datetime.now())
 
-        return {
-            'can_id': m_id,
-            'length': m_len,
-            'message': m_message,
-            'timestamp': m_time_stamp
-        }
+        canFrame = CANFrame(m_id, m_time_stamp, m_message)
+
+        assert m_len == canFrame.length
+
+        return canFrame
