@@ -1,5 +1,6 @@
 import serial
-
+import datetime
+import atexit
 
 class GenericCANAdapterDevice:
     def __init__(self):
@@ -23,7 +24,14 @@ class CANDapterDevice(GenericCANAdapterDevice):
                  debug=False):
 
         super().__init__()
+        # Set bitrate to 500Kbit and open CANDapter
+        # https://www.ewertenergy.com/products/candapter/downloads/candapter_manual.pdf
         self.canDapterDevice = serial.Serial(port, baudrate, timeout=timeout)
+        self.canDapter.sendSerialMessage('S6')
+        self.canDapter.sendSerialMessage('O')
+
+        # Always close the connection end, no need for the user to do it manually
+        atexit.register(self.closeConnection)
 
     def sendSerialMessage(self, message):
         self.canDapterDevice.write(message + '\r')
