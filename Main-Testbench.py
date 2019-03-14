@@ -2,10 +2,6 @@ from CANAdapterDevices import CANDapterDevice
 
 canDapter = CANDapterDevice()
 
-# Set bitrate to 500Kbit and open CANDapter
-canDapter.sendSerialMessage('S6')
-canDapter.sendSerialMessage('O')
-
 while True:
     data = canDapter.readCANMessage()
 
