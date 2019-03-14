@@ -3,7 +3,8 @@ import datetime
 import warnings
 import atexit
 
-ACK = b'\x06' # CANDapter successful acknowledge
+ACK = b'\x06'  # CANDapter successful acknowledge
+
 
 class GenericCANAdapterDevice:
     def __init__(self):
@@ -33,7 +34,8 @@ class CANDapterDevice(GenericCANAdapterDevice):
         self.canDapter.sendSerialMessage('S6')
         self.canDapter.sendSerialMessage('O')
 
-        # Always close the connection end, no need for the user to do it manually
+        # Always close the connection at the end,
+        # so no need for the user to do it manually
         atexit.register(self.closeConnection)
 
     def sendSerialMessage(self, message):
@@ -46,14 +48,14 @@ class CANDapterDevice(GenericCANAdapterDevice):
     def sendCANMessage(self, can_id, message):
         data_length = len(str(message)) / 2
 
-        if(data_length % 2 == 1):
-            raise ValueError('Invalid data lenght provided to CAN message')
+        if data_length % 2 == 1 or data_length > 8:
+            raise ValueError('Invalid data length provided to CAN message')
 
-        self.sendSerialMessage('T%(id)s%(length)s%(data)x' % {
-            'id': can_id,
-            'length': data_length,
-            'data': message
-        })
+        self.sendSerialMessage('T{id:x}{length:d}{data:x}'.format(
+            id=can_id,
+            length=data_length,
+            data=message
+        ))
 
     def readCANMessage(self):
         message = self.canDapterDevice.read_until('\r').replace('\r', '')[1:]
@@ -73,7 +75,10 @@ class CANDapterDevice(GenericCANAdapterDevice):
     def checkCANDapterResponse(self):
         return_message = self.__readSerialMessage()
         if return_message != ACK:
-            warnings.warn('CANDapter did not return ACK, instead returned {}'.format(return_message))
+            warnings.warn(
+                'CANDapter did not return ACK, instead returned {}'
+                .format(return_message)
+            )
 
     def closeConnection(self):
         self.canDapterDevice.write(b'C\r')
