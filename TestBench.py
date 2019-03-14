@@ -1,10 +1,19 @@
 from CANAdapterDevices import CANDapterDevice, CANFrame
+import RPi.GPIO as rGPIO
+import atexit
+
+
+class GPIO:
+    # Created so that test scripts don't need to use RPi.GPIO
+    HIGH = rGPIO.HIGH
+    LOW = rGPIO.LOW
 
 
 class STMBoard:
     def __init__(self):
         self.dcan = CANDapterDevice('/dev/ttyUSB0')
         # TODO add vcan on /dev/ttyUSB2
+        atexit.register(rGPIO.cleanup)
 
     def sendSerial():
         pass
@@ -15,7 +24,7 @@ class STMBoard:
     def setGPIO():
         pass
 
-    def receiveGPIO():
+    def readGPIO():
         pass
 
     def sendDCAN(self, *args):
@@ -58,8 +67,26 @@ class STMBoard:
 
 
 class STM32F4(STMBoard):
+    gpio_pinout = {
+        # STMBoard: Arduino pin
+        'PC1': 37,
+        'PC2': 40
+    }
+
     def __init__(self):
         super().__init__()
+
+    def setGPIO(self, pin, val):
+        rGPIO.setmode(rGPIO.BOARD)
+        pin = STM32F4.gpio_pinout[pin]
+        rGPIO.setup(pin, rGPIO.OUT, initial=0)
+        rGPIO.output(pin, val)
+
+    def readGPIO(self, pin):
+        rGPIO.setmode(rGPIO.BOARD)
+        pin = STM32F4.gpio_pinout[pin]
+        rGPIO.setup(pin, rGPIO.IN, rGPIO.PUD_DOWN)
+        return rGPIO.input(pin)
 
 
 class STM32L4(STMBoard):
