@@ -6,6 +6,18 @@ import atexit
 ACK = b'\x06'  # CANDapter successful acknowledge
 
 
+class CANFrame:
+    def __init__(self, m_id, m_timestamp, m_data):
+        self.id = m_id
+        self.data = m_data
+        self.timestamp = m_timestamp
+        self.length = int(len('{:x}'.format(self.data)) / 2)
+
+        bits = len('{:x}'.format(self.data))
+        if bits % 2 == 1 or self.length > 8:
+            raise ValueError('Invalid data length provided to CAN message')
+
+
 class GenericCANAdapterDevice:
     def __init__(self):
         pass
@@ -31,8 +43,8 @@ class CANDapterDevice(GenericCANAdapterDevice):
         # Set bitrate to 500Kbit and open CANDapter
         # https://www.ewertenergy.com/products/candapter/downloads/candapter_manual.pdf
         self.canDapterDevice = serial.Serial(port, baudrate, timeout=timeout)
-        self.canDapter.sendSerialMessage('S6')
-        self.canDapter.sendSerialMessage('O')
+        self.sendSerialMessage('S6')
+        self.sendSerialMessage('O')
 
         # Always close the connection at the end,
         # so no need for the user to do it manually
@@ -45,16 +57,11 @@ class CANDapterDevice(GenericCANAdapterDevice):
     def __readSerialMessage(self):
         return self.canDapterDevice.read()
 
-    def sendCANMessage(self, can_id, message):
-        data_length = len(str(message)) / 2
-
-        if data_length % 2 == 1 or data_length > 8:
-            raise ValueError('Invalid data length provided to CAN message')
-
+    def sendCANMessage(self, canFrame):
         self.sendSerialMessage('T{id:x}{length:d}{data:x}'.format(
-            id=can_id,
-            length=data_length,
-            data=message
+            id=canFrame.id,
+            length=canFrame.length,
+            data=canFrame.data
         ))
 
     def readCANMessage(self):
@@ -65,12 +72,9 @@ class CANDapterDevice(GenericCANAdapterDevice):
         m_message = message[4:-4]
         m_time_stamp = str(datetime.datetime.now())
 
-        return {
-            'can_id': m_id,
-            'length': m_len,
-            'message': m_message,
-            'timestamp': m_time_stamp
-        }
+        canFrame = CANFrame(m_id, m_time_stamp, m_message)
+        assert m_len == canFrame.length
+        return canFrame
 
     def checkCANDapterResponse(self):
         return_message = self.__readSerialMessage()
