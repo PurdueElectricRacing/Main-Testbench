@@ -1,6 +1,6 @@
-from CANAdapterDevices import SerialCANDapterDevice
+from CANAdapterDevices import CANDapterDevice
 
-canDapter = SerialCANDapterDevice()
+canDapter = CANDapterDevice()
 
 while True:
     data = canDapter.readCANMessage()
