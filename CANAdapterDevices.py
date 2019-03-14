@@ -1,6 +1,9 @@
 import serial
 import datetime
+import warnings
 import atexit
+
+ACK = b'\x06' # CANDapter successful acknowledge
 
 class GenericCANAdapterDevice:
     def __init__(self):
@@ -34,7 +37,11 @@ class CANDapterDevice(GenericCANAdapterDevice):
         atexit.register(self.closeConnection)
 
     def sendSerialMessage(self, message):
-        self.canDapterDevice.write(message + '\r')
+        self.canDapterDevice.write('{}\r'.format(message).encode())
+        self.checkCANDapterResponse()
+
+    def __readSerialMessage(self):
+        return self.canDapterDevice.read()
 
     def sendCANMessage(self, can_id, message):
         data_length = len(str(message)) / 2
@@ -62,3 +69,11 @@ class CANDapterDevice(GenericCANAdapterDevice):
             'message': m_message,
             'timestamp': m_time_stamp
         }
+
+    def checkCANDapterResponse(self):
+        return_message = self.__readSerialMessage()
+        if return_message != ACK:
+            warnings.warn('CANDapter did not return ACK, instead returned {}'.format(return_message))
+
+    def closeConnection(self):
+        self.canDapterDevice.write(b'C\r')
