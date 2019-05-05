@@ -34,10 +34,10 @@ class STMBoard:
         self.__sendCAN(self.vcan, *args)
 
     def receiveDCAN(self):
-        self.dcan.readCANMessage()
+        return self.dcan.readCANMessage()
 
     def receiveVCAN(self):
-        self.vcan.readCANMessage()
+        return self.vcan.readCANMessage()
 
     def __sendCAN(self, *args):
         frame = None

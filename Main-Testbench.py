@@ -1,12 +1,11 @@
-from CANAdapterDevices import CANDapterDevice
+from TestBench import STM32F4
+import RPi.GPIO as rGPIO
+import time
 
-canDapter = CANDapterDevice()
+board = STM32F4()
 
 while True:
-    data = canDapter.readCANMessage()
+    data = board.receiveDCAN()
 
-    print('-- ID:%(id)x \tMessage:%(message)s \tTimestamp: %(time)s' % {
-            'id': data['id'],
-            'message': data['message'],
-            'time': data['timestamp']
-    })
+    print('-- ID: {:<10x}Message: {:<15x}Timestamp:{:s}'
+          .format(data.id, data.data, data.timestamp))

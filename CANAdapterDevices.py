@@ -7,14 +7,13 @@ ACK = b'\x06'  # CANDapter successful acknowledge
 
 
 class CANFrame:
-    def __init__(self, m_id, m_timestamp, m_data):
+    def __init__(self, m_id, m_timestamp, m_data, m_length):
         self.id = m_id
         self.data = m_data
         self.timestamp = m_timestamp
-        self.length = int(len('{:x}'.format(self.data)) / 2)
+        self.length = m_length
 
-        bits = len('{:x}'.format(self.data))
-        if bits % 2 == 1 or self.length > 8:
+        if self.length > 8:
             raise ValueError('Invalid data length provided to CAN message')
 
 
@@ -43,7 +42,7 @@ class CANDapterDevice(GenericCANAdapterDevice):
         # Set bitrate to 500Kbit and open CANDapter
         # https://www.ewertenergy.com/products/candapter/downloads/candapter_manual.pdf
         self.canDapterDevice = serial.Serial(port, baudrate, timeout=timeout)
-        self.sendSerialMessage('S6')
+        self.sendSerialMessage('S7')
         self.sendSerialMessage('O')
 
         # Always close the connection at the end,
@@ -65,15 +64,15 @@ class CANDapterDevice(GenericCANAdapterDevice):
         ))
 
     def readCANMessage(self):
-        message = self.canDapterDevice.read_until('\r').replace('\r', '')[1:]
+        message = self.canDapterDevice.read_until(b'\r').decode('utf-8')
 
-        m_id = message[0:3]
-        m_len = message[3:4]
-        m_message = message[4:-4]
+        # First character of message is always 't'
+        m_id = int(message[1:4], 16)
+        m_len = int(message[4:5], 16)
+        m_message = int(message[5:], 16)
         m_time_stamp = str(datetime.datetime.now())
 
-        canFrame = CANFrame(m_id, m_time_stamp, m_message)
-        assert m_len == canFrame.length
+        canFrame = CANFrame(m_id, m_time_stamp, m_message, m_len)
         return canFrame
 
     def checkCANDapterResponse(self):
