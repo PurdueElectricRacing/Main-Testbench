@@ -8,6 +8,8 @@
 #include <stdio.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
+#include <unistd.h>
+#include <asm/sockios.h>
 
 // C++ includes
 #include <iostream>
@@ -55,9 +57,10 @@ CanInterface::CanInterface(int type, int protocol, int enable_own_messages, std:
   if_name = ifname;
 }
 
-
-
 /// @brief: send data to the address specified by id
+///
+/// @note: see https://www.kernel.org/doc/Documentation/networking/can.txt for 
+///        for info on the socketCAN api
 ///
 /// @return: number of bytes written, or -1 on error
 int16_t CanInterface::writeCanData(canid_t id, uint8_t dlc, uint8_t *data)
@@ -79,4 +82,83 @@ int16_t CanInterface::writeCanData(canid_t id, uint8_t dlc, uint8_t *data)
   }
 
   return bytes;
+}
+
+
+/// @brief: reads whatever is in the CAN buffer and returns a CanFrame object
+///
+/// @return:
+CanFrame CanInterface::readCanData()
+{
+  struct can_frame frame;
+  CanFrame frame_obj;
+  int32_t nbytes = 0;
+
+  // copy pasted this from the kernel documentation
+  nbytes = read(can_socket_fd, &frame, sizeof(struct can_frame));
+
+  if (nbytes < 0)
+  {
+    perror("can raw socket read");
+    throw CanDataException;
+  }
+
+  // suppress compiler warnings grumble grumble
+  if (((uint64_t) nbytes) < sizeof(struct can_frame))
+  {
+    fprintf(stderr, "read: incomplete CAN frame\n");
+    throw CanDataException;
+  }
+
+  frame_obj = frame;
+
+  // get the timestamp of the message and store it in the wrapper class.
+  // TODO figure out why SIOCGSTAMP isn't found
+  // ioctl(can_socket_fd, SIOCGSTAMP, &(frame_obj.timestamp));
+
+  return frame_obj;
+}
+
+
+
+/// @brief: Copy constructor
+CanFrame::CanFrame(const CanFrame &frame)
+{
+  can_id = frame.can_id;
+  can_dlc = frame.can_dlc;
+  padding = frame.padding;
+  reserve0 = frame.reserve0;
+  reserve1 = frame.reserve1;
+  timestamp = frame.timestamp;
+  memcpy(data, frame.data, 8);
+}
+
+
+/// @brief: assignment operator overload for wrapping struct can_frame
+///         does not get a timestamp.
+CanFrame& CanFrame::operator=(const struct can_frame &frame)
+{
+  can_id  = frame.can_id;
+  can_dlc = frame.can_dlc;
+  padding = frame.__pad;
+  reserve0 = frame.__res0;
+  reserve1 = frame.__res1;
+  memcpy(data, frame.data, 8);
+
+  return *this;
+}
+
+
+/// @brief: assignment operator for copying one CanFrame object to another.
+CanFrame & CanFrame::operator=(const CanFrame &frame)
+{
+  can_id = frame.can_id;
+  can_dlc = frame.can_dlc;
+  padding = frame.padding;
+  reserve0 = frame.reserve0;
+  reserve1 = frame.reserve1;
+  timestamp = frame.timestamp;
+  memcpy(data, frame.data, 8);
+
+  return *this;
 }
