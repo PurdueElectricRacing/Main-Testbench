@@ -8,16 +8,43 @@
 #include <linux/can/raw.h>
 
 
+// user includes here
+#include "exceptions.hpp"
 
-// likely going to add a bunch of exceptions here 
-class CanSocketException : public std::exception
+
+
+// wrapper for the struct can_frame to allow for the = operator to be
+// used for assignment
+struct CanFrame
 {
-  virtual const char * what() const throw()
+  CanFrame()
   {
-    return "An error occurred while opening a CAN socket.\n";
-  }
-} CanSocketException;
+    can_id = 0;
+    can_dlc = 0;
+    padding = 0;
+    reserve0 = 0;
+    reserve1 = 0;
+  };
 
+  CanFrame(const CanFrame & frame);
+
+  // do nothing
+  virtual ~CanFrame() {};
+
+  uint8_t can_id;
+  uint8_t can_dlc;
+  uint8_t padding;
+  uint8_t reserve0;
+  uint8_t reserve1;
+  uint8_t data[8];
+  struct timeval timestamp;
+
+  CanFrame &operator=(const struct can_frame &frame);
+  CanFrame &operator=(const CanFrame &frame);
+};
+
+/// @note: see https://www.kernel.org/doc/Documentation/networking/can.txt for
+///        for info on the socketCAN api
 class CanInterface
 {
 public:
@@ -34,11 +61,12 @@ public:
 
   // these values can be changed to test stuff but i'm not sure how to use the 
   // BCM protocol so it probably won't be changed
+
   CanInterface(int type = SOCK_RAW, int protocol = CAN_RAW, 
                int enable_own_messages = 0, std::string ifname = "can0");
-  virtual ~CanInterface();
+  virtual ~CanInterface() {};
 
-  uint8_t * readCanData();
+  CanFrame readCanData();
   int16_t writeCanData(canid_t id, uint8_t dlc, uint8_t * data);
 
 private:
