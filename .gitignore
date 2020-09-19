@@ -3,7 +3,9 @@
 *.pyc
 .vscode/
 src/TestBench
-
+moc_predefs.h
+/bin/*
+**/TestBench
 # This file is used to ignore files which are generated
 # ----------------------------------------------------------------------------
 
