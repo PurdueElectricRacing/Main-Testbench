@@ -79,4 +79,10 @@ Thumbs.db
 *.dll
 *.exe
 
+TestBench.*
 
+parser.*
+!parser.y
+lexer.*
+!lexer.l
+*.o

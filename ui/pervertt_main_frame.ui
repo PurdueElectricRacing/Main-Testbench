@@ -615,14 +615,14 @@
             </attribute>
             <layout class="QGridLayout" name="gridLayout_2">
              <item row="4" column="1">
-              <widget class="QSlider" name="outslide2">
+              <widget class="QSlider" name="a1outslide">
                <property name="orientation">
                 <enum>Qt::Vertical</enum>
                </property>
               </widget>
              </item>
              <item row="4" column="3">
-              <widget class="QSlider" name="outslide4">
+              <widget class="QSlider" name="a3outslide">
                <property name="maximum">
                 <number>99</number>
                </property>
@@ -632,7 +632,7 @@
               </widget>
              </item>
              <item row="2" column="2">
-              <widget class="QLabel" name="outlab3">
+              <widget class="QLabel" name="a2out_label">
                <property name="text">
                 <string>Output Value</string>
                </property>
@@ -649,14 +649,14 @@
               </widget>
              </item>
              <item row="2" column="0">
-              <widget class="QLabel" name="outlab1">
+              <widget class="QLabel" name="a0out_label">
                <property name="text">
                 <string>Output Value</string>
                </property>
               </widget>
              </item>
              <item row="0" column="2">
-              <widget class="QLabel" name="label_3">
+              <widget class="QLabel" name="a2label">
                <property name="frameShape">
                 <enum>QFrame::NoFrame</enum>
                </property>
@@ -669,7 +669,7 @@
               </widget>
              </item>
              <item row="4" column="0">
-              <widget class="QSlider" name="outslide1">
+              <widget class="QSlider" name="a0outslide">
                <property name="orientation">
                 <enum>Qt::Vertical</enum>
                </property>
@@ -682,7 +682,7 @@
               </widget>
              </item>
              <item row="1" column="2">
-              <widget class="QLineEdit" name="lineEdit_3"/>
+              <widget class="QLineEdit" name="a2_name_field"/>
              </item>
              <item row="3" column="0">
               <widget class="QDoubleSpinBox" name="a0_val">
@@ -711,7 +711,7 @@
               </widget>
              </item>
              <item row="4" column="2">
-              <widget class="QSlider" name="outslide3">
+              <widget class="QSlider" name="a2outslide">
                <property name="orientation">
                 <enum>Qt::Vertical</enum>
                </property>
@@ -728,48 +728,48 @@
               </widget>
              </item>
              <item row="0" column="0">
-              <widget class="QLabel" name="label">
+              <widget class="QLabel" name="a0label">
                <property name="text">
                 <string>Output Name</string>
                </property>
               </widget>
              </item>
              <item row="1" column="0">
-              <widget class="QLineEdit" name="name1"/>
+              <widget class="QLineEdit" name="a0_name_field"/>
              </item>
              <item row="2" column="1">
-              <widget class="QLabel" name="outlab2">
+              <widget class="QLabel" name="a1out_label">
                <property name="text">
                 <string>Output Value</string>
                </property>
               </widget>
              </item>
              <item row="0" column="1">
-              <widget class="QLabel" name="label_2">
+              <widget class="QLabel" name="a1label">
                <property name="text">
                 <string>Output Name</string>
                </property>
               </widget>
              </item>
              <item row="0" column="3">
-              <widget class="QLabel" name="label_4">
+              <widget class="QLabel" name="a3label">
                <property name="text">
                 <string>Output Name</string>
                </property>
               </widget>
              </item>
              <item row="1" column="3">
-              <widget class="QLineEdit" name="lineEdit_4"/>
+              <widget class="QLineEdit" name="a3_name_field"/>
              </item>
              <item row="2" column="3">
-              <widget class="QLabel" name="outlab4">
+              <widget class="QLabel" name="a3out_lab">
                <property name="text">
                 <string>Output Value</string>
                </property>
               </widget>
              </item>
              <item row="1" column="1">
-              <widget class="QLineEdit" name="name2"/>
+              <widget class="QLineEdit" name="a1_name_field"/>
              </item>
             </layout>
            </widget>

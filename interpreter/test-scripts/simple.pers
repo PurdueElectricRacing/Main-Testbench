@@ -1,0 +1,69 @@
+// globals section
+// GLOBAL = 69;
+// SERIAL_LOG_FILE = "";
+
+// // end globals section
+
+
+// routine "this is a routine test" {
+//   set-pin DOUT 3 HIGH;
+//   println "yo";
+//   print RESULT; // error
+
+// }
+
+
+
+test "hello this is a test script" {
+  Var1 = "toast";
+  // VAR = RESULT;    // invalid (RESULT isn't defined)
+  // // var = 00|00|00|; // syntax error invalid (trailing |)
+  var4 = 5 + 00|00|00; // invalid (bad op)
+  var4 = 00|00|00 / 69; // invalid (dup var, bad op)
+  var2 = "69 " + 5;  // ok
+  var2 = 5 + 6;  // invalid (already defined)
+
+  cars = 'this is okay too';
+  
+  set-pin DOUT 0 HIGH; // invalid (not integer for pin)
+  set-pin DOUT Var1 HIGH;    // invalid (not integer for pin)
+
+  expect GT "89"; // invalid (not int for comparison)
+
+  expect GT 6 and LT 0|0|0;  // invalid (not comparing the same data type) 
+  expect GT 6 and EQ 0|0|0;  // invalid (not comparing the same data type) 
+  expect EQ 5 + 6 + 90 / 32 + Var1; // OK (though result might be whack)
+
+  prompt fudge;
+
+  print Var1; // ok
+  print 5 + 6 + 90 / 32 + Var1; // OK (though result might be whack)
+
+  
+  loop forever {  // should be ok
+    print "";
+  }
+
+  set-pin DOUT 3 HIGH;
+  delay 45;
+  read-pin DIN 4 ;  // read-x would store return result in some static variable
+                    // which would then be accessible forever by EXPECT and ASSERT
+
+
+  expect GT 6; // 
+  prompt "Do some fancy stuff";
+
+  assert GT 6;
+
+  call "this is a routine test";
+
+
+
+
+  loop 4 {
+    perrintln "Cheese biscuits";
+    perrint "Sausage biscuits";
+  }
+}
+
+

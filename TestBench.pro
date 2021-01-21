@@ -11,11 +11,16 @@ CONFIG += c++11
 SOURCES += \
     ./src/main.cpp \
     ./src/pervertt_main_frame.cpp \
-    ./src/can_interface.cpp
+    ./src/can_interface.cpp \
+  src/manual_controls.cpp
 
 HEADERS += \
-    ./inc/pervertt_main_frame.h \
-    ./inc/can_interface.hpp \
+  ./inc/pervertt_main_frame.h \
+  ./inc/can_interface.hpp \
+  inc/manual_controls.h \
+  inc/can_parsing.h \
+  inc/exceptions.hpp \
+  
 
 FORMS += \
     ./ui/pervertt_main_frame.ui

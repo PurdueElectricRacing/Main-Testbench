@@ -12,7 +12,7 @@ class CanSocketException : public std::exception
   {
     return "An error occurred while opening a CAN socket.\n";
   }
-} CanSocketException;
+} static CanSocketException;
 
 class CanDataException : public std::exception
 {
@@ -20,7 +20,7 @@ class CanDataException : public std::exception
   {
     return "An error occurred while attempting to read / write from CAN device.\n";
   }
-} CanDataException;
+} static CanDataException;
 
 
 #endif

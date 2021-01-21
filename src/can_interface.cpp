@@ -3,6 +3,7 @@
 #include <sys/socket.h>
 #include <linux/can.h>
 #include <linux/can/error.h>
+#include <linux/can/raw.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -93,7 +94,7 @@ CanFrame CanInterface::readCanData()
   struct can_frame frame;
   CanFrame frame_obj;
   int32_t nbytes = 0;
-
+  
   // copy pasted this from the kernel documentation
   nbytes = read(can_socket_fd, &frame, sizeof(struct can_frame));
 
@@ -161,4 +162,19 @@ CanFrame & CanFrame::operator=(const CanFrame &frame)
   memcpy(data, frame.data, 8);
 
   return *this;
+}
+
+
+/// @brief: Stream output operator for CanFrame. Allows for printing data frame 
+///         to output stream easily
+std::ostream &operator<<(std::ostream &out, const CanFrame &frame)
+{
+  out << "CAN ID: " << frame.can_id << " | Data Length: " << frame.can_dlc << "\n";
+
+  for (uint8_t i = 0; i < frame.can_dlc; i++)
+  {
+    out << std::string(4, ' ') << i << ": " << frame.data[i] << "\n";
+  }
+
+  return out;
 }

@@ -6,12 +6,20 @@
 #include <exception>
 #include <linux/can.h>
 #include <linux/can/raw.h>
-
+#include <iostream>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
+#include <unistd.h>
+#include <asm/sockios.h>
 
 // user includes here
 #include "exceptions.hpp"
+struct CanFrame;
+class CanInterface;
 
-
+std::ostream &operator<<(std::ostream &out, const CanFrame &frame);
 
 // wrapper for the struct can_frame to allow for the = operator to be
 // used for assignment

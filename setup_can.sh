@@ -47,7 +47,7 @@ if (( $setup == 1 )); then
   # -s7 = 750k
   # -s8 = 1M
 
-  slcand -o -c -s8 /dev/$devname can0
+  slcand -o -c -s6 /dev/$devname can0
   if (( $? != 0 )); then
     echo Unable to init can0. Is it already setup?
     echo "check to make sure the device name is correct using dmesg -kT"

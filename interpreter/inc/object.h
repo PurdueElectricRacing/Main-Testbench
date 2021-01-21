@@ -1,0 +1,18 @@
+#ifndef __OBJECT_H__
+#define __OBJECT_H__
+
+#include <string>
+#include "typedefs.h"
+
+struct Object
+{
+  Object() {};
+  virtual ~Object() {}
+  virtual obj_t type(){return none;};
+  virtual std::string stringify(){ 
+    return std::to_string((size_t)this) + ": type: none";
+  };
+};
+
+
+#endif
