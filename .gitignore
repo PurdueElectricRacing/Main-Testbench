@@ -86,3 +86,4 @@ parser.*
 lexer.*
 !lexer.l
 *.o
+build
