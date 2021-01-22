@@ -1,3 +1,0 @@
-/home/chis/Documents/PER/TestBench/interpreter/build/CMakeFiles/rebuild_cache.dir
-/home/chis/Documents/PER/TestBench/interpreter/build/CMakeFiles/edit_cache.dir
-/home/chis/Documents/PER/TestBench/interpreter/build/CMakeFiles/perterpreter.dir
