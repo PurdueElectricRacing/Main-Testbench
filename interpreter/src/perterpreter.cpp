@@ -5,20 +5,23 @@
 #include <filesystem>
 
 #include "parser.h"
-#include "object.h"
+
 #include "cxxopts.hpp"
 #include "symbol-table.h"
 #include "type-checker.h"
+#include "perterpreter.h"
 
 extern FILE *yyin;
 extern std::string infilename;
 extern Node * root;
 extern int errors;
 
-Routines *routines = 0;
-Tests *tests = 0;
 
-void createTemplateScript(std::string spath)
+
+/// @brief: Function that gets called when the user specifies the -g, 
+///         --generate-template parameter in command line or uses that 
+///         functionality of the GUI
+void Perterpreter::createTemplateScript(std::string spath)
 {
   using namespace std::filesystem;
   path p = canonical(path(spath));
@@ -63,7 +66,7 @@ void createTemplateScript(std::string spath)
 
 /// @brief: Perform the lexical analysis/parsing and type checking only
 /// @return: true on valid syntax, false on error
-bool performSyntaxAnalysis(std::filesystem::path filepath)
+bool Perterpreter::performSyntaxAnalysis(std::filesystem::path filepath)
 {
   infilename = filepath.c_str();
   yyin = fopen(filepath.c_str(), "r");
@@ -89,7 +92,7 @@ bool performSyntaxAnalysis(std::filesystem::path filepath)
   routines = new Routines();
   tests = new Tests();
   
-  if (!checkTypes(root, tests, routines))
+  if (!checkTypes(root, global_table, tests, routines))
   {
     std::cerr << errors << " errors.\n";
     return false;
@@ -98,10 +101,68 @@ bool performSyntaxAnalysis(std::filesystem::path filepath)
 }
 
 
+
+
+
+/// @brief: setter function for the gloabl read-only variable SERIAL_LOG_FILE
+void Perterpreter::setSerialLogFile(std::string path)
+{
+  global_table->setReadOnlyVar("SERIAL_LOG_FILE", new String(path));
+}
+
+
+
+/// @brief: setter function for the gloabl read-only variable LOG_FILE
+void Perterpreter::setLogFile(std::string path)
+{
+
+  global_table->setReadOnlyVar("LOG_FILE", new String(path));
+}
+
+
+
+/// @brief: setter function for the gloabl read-only variable GPIO_DEVICE
+void Perterpreter::setGpioDev(std::string dev)
+{
+  global_table->setReadOnlyVar("GPIO_DEVICE", new String(dev));
+}
+
+
+
+/// @brief: setter function for the gloabl read-only variable SERIAL_DEVICE
+void Perterpreter::setSerialDev(std::string dev)
+{
+  global_table->setReadOnlyVar("SERIAL_DEVICE", new String(dev));
+}
+
+
+
+/// @brief: setter function for the gloabl read-only variable VERBOSE
+void Perterpreter::setVerbose(int verb)
+{
+  global_table->setReadOnlyVar("VERBOSE", new Integer(verb));
+}
+
+
+
+
+/// @brief: This is what it's all been for. PER has it's own language now
+void Perterpreter::perterpret()
+{
+
+}
+
+
+
+
+// =============================================================================
 #ifdef STANDALONE
 int main (int argc, char ** argv)
 {
   using namespace cxxopts;
+
+  Perterpreter p;
+  
   std::string infile, device, io, logfile, toutfile, sdest;
   std::vector<std::string> routines_to_run, tests_to_run;
 
@@ -183,7 +244,7 @@ try
   {
     if (!sdest.empty())
     {
-      createTemplateScript(sdest);
+      p.createTemplateScript(sdest);
       exit(0);
     }
     else
@@ -217,7 +278,7 @@ try
   }
 
   // this is a global variable that the error printer uses.
-  good_syntax = performSyntaxAnalysis(infile);
+  good_syntax = p.performSyntaxAnalysis(infile);
   
   // terminate if this switch was passed
   if (syntax_check)

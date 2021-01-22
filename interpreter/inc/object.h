@@ -3,6 +3,7 @@
 
 #include <string>
 #include "typedefs.h"
+#include <iostream>
 
 struct Object
 {

@@ -39,6 +39,7 @@
   #include <string>
   #include <iostream>
   #include <cstdio>
+
   #include "symbol-table.h"
   #include "object.h"
   #include "ast.h"
@@ -53,6 +54,7 @@
   std::string infilename;
   int errors = 0;
   int perform_math_op(Node * lhs, Node * rhs, std::string * op);
+  std::string stringifyNode(Node * node);
 
 
 %}
@@ -147,14 +149,6 @@ Test:
     $$->setString($2);
     $$->addChild($4);
   };
-
-
-VariableDecl:
-  identifier '=' Exp {
-      $$ = new Node(vardecl_node, yylineno);
-      $$->setString($1);
-      $$->addChild($3);
-  };
  
   
 
@@ -232,8 +226,14 @@ Exp:
                  || $3->node_type == stringLiteral_node)
         {
           // TODO string concatenation
+          Node * str = new Node(stringLiteral_node, $1->line_no);
+          std::string val = stringifyNode($1) + stringifyNode($3);
+          str->setString(val);
+          delete $1;
+          delete $3;
+          $$ = str;
         }
-         else 
+        else 
         {
           $$ = new Node($2, yylineno);
           $$->addChild($1);
@@ -347,6 +347,14 @@ Exp:
     $$ = $2;
   };
 
+
+
+VariableDecl:
+  identifier '=' Exp ';'{
+      $$ = new Node(vardecl_node, yylineno);
+      $$->setString($1);
+      $$->addChild($3);
+  };
 
 SendMsgCall:
   send_msg hexLiteral can_msg {
@@ -539,7 +547,7 @@ Statement: error ';' {
     yyclearin;
   }
   |
-  VariableDecl ';'{
+  VariableDecl{
       $$ = $1;
   }
   | call stringLiteral ';' {
@@ -596,6 +604,7 @@ void yyerror(const char * err)
 {
   printf( "%s on line %d\n", err, yylineno);
 }
+
 
 
 int perform_math_op(Node * lhs, Node * rhs, std::string * op)

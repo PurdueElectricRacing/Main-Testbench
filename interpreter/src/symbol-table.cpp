@@ -5,20 +5,19 @@
 
 #include "synterr.h"
 
+std::set<std::string> global_var_keys = {
+  "SERIAL_LOG_FILE",
+  "RETVAL", 
+  "LOG_FILE", 
+  "VERBOSE",  
+  "SERIAL_DEVICE", 
+  "GPIO_DEVICE"
+};
 
 
 SymbolTable::SymbolTable(Node * root) 
 {
   this->root = root;
-  // setup global variables
-  symbols = {
-              {"SERIAL_LOG_FILE", new String()},
-              {"RETVAL", new Object()},
-              {"LOG_FILE", new String()},
-              {"VERBOSE", new Integer(0)},
-              {"SERIAL_DEVICE", new String()},
-              {"GPIO_DEVICE", new String()}
-            };
   globals = 0;
 }
 
@@ -27,9 +26,48 @@ SymbolTable::SymbolTable(Node * root)
 /// @brief: deletes the old object and updates it to be o. Must be a heap object
 void SymbolTable::setRetval(Object * o)
 {
-  Object * old = getObject("RETVAL");
-  delete old;
   setObject("RETVAL", o);
+}
+
+
+void SymbolTable::setReadOnlyVar(std::string key, Object * o)
+{
+
+}
+
+
+
+/// @brief: updates the variable "key" with the new object o
+///         This is strictly for adding global variables or modifying existing 
+///         ones
+bool SymbolTable::setGlobal(std::string key, Object * o)
+{
+  // don't allow writing to global RO vars
+  if (global_var_keys.find(key) != global_var_keys.end() && key != "RETVAL")
+  {
+    invalidWriteToReadOnlyValue(key);
+    return false;
+  }
+
+  // global symbol table
+  if (type() == generic_table)
+  {
+    if (symbols.find(key) != symbols.end())
+    {
+      Object * old = symbols[key];
+      delete old;
+      symbols[key] = o;
+    }
+    else
+    {
+      symbols.emplace(key, o);
+    }
+  }
+  else
+  {
+    globals->setGlobal(key, o);
+  }
+  return true;
 }
 
 
@@ -39,6 +77,13 @@ void SymbolTable::setRetval(Object * o)
 void SymbolTable::setObject(std::string key, Object * o)
 {
   Object * old = 0;
+
+  // don't allow writing to global RO vars  
+  if (global_var_keys.find(key) != global_var_keys.end() && key != "RETVAL")
+  {
+    invalidWriteToReadOnlyValue(key);
+    return;
+  }
 
   if (symbols.find(key) != symbols.end())
   {

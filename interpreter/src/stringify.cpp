@@ -1,6 +1,31 @@
 #include "typedefs.h"
-
+#include "ast.h"
+#include "canmsg.h"
 #include <string>
+#include <sstream>
+#include <iomanip>
+
+
+/// @brief: gets the string value of a literal node. Cannot be used on non-literals
+std::string stringifyNode(Node * node)
+{
+  if (node->node_type == integerLiteral_node)
+  {
+    return std::to_string(node->data.intval);
+  }
+  if (node->node_type == hexLiteral_node)
+  {
+    std::stringstream ss;
+    ss << std::hex << node->data.intval;
+    return std::string("0x") + ss.str();
+  }
+  else if (node->node_type == can_msg_node)
+  {
+    return node->data.strval;
+  }
+  return "";
+}
+
 
 
 std::string objTypeToString(obj_t t)

@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+
 extern std::string infilename;
 extern int errors;
 
@@ -16,6 +17,15 @@ void mismatched_type(obj_t lhs, obj_t rhs, int lineno, std::string op)
 }
 
 
+void invalidWriteToReadOnlyValue(std::string var, int lineno)
+{
+  std::cerr << "Error on line " << infilename << ":" << lineno
+            << "\n\tInvalid operation: Cannot write to read-only variable '" 
+            << var << "'.\n\n";
+  errors++;
+}
+
+
 /// @brief: prints a message for a binary operation performed on types which /
 ///         are not compatible.
 void mismatched_type(obj_t lhs, int lineno, std::string op)
@@ -26,12 +36,22 @@ void mismatched_type(obj_t lhs, int lineno, std::string op)
   errors++;
 }
 
+/// @brief: Display an error message about assigning a value that is not 
+///         assignable to the reserved variables
+void invalidGlobalOverwrite(std::string var, int lineno, obj_t otype)
+{
+  std::cerr << "Error on line " << infilename << ":" << lineno << "\n"
+            << "\t'" << var << "' cannot be assigned to type '" 
+            << objTypeToString(otype) << "'\n\n";
+  errors++;
+}
+
 
 /// @brief: Display an error message about calling a routine that doesn't exist
 void invalidCallType(std::string callee, Node * n)
 {
   std::cerr << "Error on line " << infilename << ":" << n->line_no << "\n"
-            << "'" << callee << "' is not a valid routine.\n\n";   
+            << "\t'" << callee << "' is not a valid routine.\n\n";   
             errors++;
 }
 

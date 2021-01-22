@@ -4,18 +4,17 @@
 #include "object-factory.h"
 
 
-SymbolTable * currscope = 0;
+extern std::set<std::string> global_var_keys;
 
 /// @brief: recurses through the AST to perform syntax validation.
 ///         This family of functions will handle printing syntax errors
 ///
 /// @return: true if the syntax was good, false if there was an error
-bool checkTypes(Node * root, Tests *tests, Routines *routines)
+bool checkTypes(Node * root, SymbolTable * currscope, Tests *tests, Routines *routines)
 {
 
   bool ret = true;
   // create a new global symbol table pointer
-  currscope = new SymbolTable(root);
 
   for(auto child = root->children.begin();child != root->children.end();child++)
   {
@@ -26,7 +25,7 @@ bool checkTypes(Node * root, Tests *tests, Routines *routines)
     if (type == routine_list_node || type == test_list_node
         || type == vardecl_list_node || type == statement_list)
     {
-      bool localret = checkTypes(node, tests, routines);
+      bool localret = checkTypes(node, currscope, tests, routines);
 
       if (ret)
       {
@@ -35,7 +34,7 @@ bool checkTypes(Node * root, Tests *tests, Routines *routines)
     }
     else if (type == vardecl_node)
     {
-      obj_t rhst = checkVardecl(node);
+      obj_t rhst = checkVardecl(node, currscope);
       if (rhst != invalid)
       {
         currscope->insert(node->data.strval, 
@@ -51,60 +50,65 @@ bool checkTypes(Node * root, Tests *tests, Routines *routines)
       }
       else
       {
-        Routine * routine = routines->getRoutine(node->data.strval,
-                                                 node->line_no);
-        if (routine == NULL)
-        {
-          funcUndefined(node->data.strval, "routine", node->line_no);
-        }
+        routines->getRoutine(node->data.strval, node->line_no);
       }
     }
     else if (type == serial_tx || type == print || type == println
              || type == prompt_node)
     {
-      checkSingleParamCmd(node);
+      checkSingleParamCmd(node, currscope);
     }
     else if (type == send_msg_node)
     {
-      checkSendMsg(node);
+      checkSendMsg(node, currscope);
     }
     else if (type == read_msg_node)
     {
-      checkReadMsg(node);
+      checkReadMsg(node, currscope);
     }
     else if (type == analog_write || type == digital_write)
     {
-      checkPinWrite(node);
+      checkPinWrite(node, currscope);
     }
     else if (type == loop_node)
     {
       // don't try to check the node if it's a forever keyword
       if (node->children[0]->node_type != forever_node)
       {
-        checkIntegralArg(node);
+        checkIntegralArg(node, currscope);
       }
-      checkTypes(node, tests, routines);
+      checkTypes(node, currscope, tests, routines);
     }
     // these commands take 1 integral argument 
     //(can be in the form of an expressions
-    else if (type == delay_node || type == loop_node
-             || type == digital_read || type == analog_read)
+    else if (type == delay_node || type == loop_node)
     {
-      checkIntegralArg(node);
+      checkIntegralArg(node, currscope);
     }
+    else if (type == digital_read || type == analog_read)
+    {
+      if (checkIntegralArg(node, currscope))
+      {
+        currscope->setRetval(new Integer());
+      }
+    }    
     else if (type == routine_node)
     {
       currscope = routines->addRoutine(node, currscope);
-      checkTypes(node, tests, routines);
+      checkTypes(node, currscope, tests, routines);
     }
     else if (type == test_node)
     {
       currscope = tests->addTest(node, currscope);
-      checkTypes(node, tests, routines);
+      checkTypes(node, currscope, tests, routines);
     }
     else if (type == assert_node || type == expect_node)
     {
-      checkExpectAssert(node);
+      checkExpectAssert(node, currscope);
+    }
+    else if (type == serial_rx)
+    {
+      currscope->setRetval(new String());      
     }
   }
 }
@@ -114,15 +118,15 @@ bool checkTypes(Node * root, Tests *tests, Routines *routines)
 ///         Will print error messages to stderr
 ///
 /// @return: true if valid parameters, false if
-bool checkPinWrite(Node * node) 
+bool checkPinWrite(Node * node, SymbolTable * currscope) 
 {
   bool ret = true;
-  obj_t pin_type = checkExp(node->children[0]);
+  obj_t pin_type = checkExp(node->children[0], currscope);
   
   // call to analog write
   if (node->children.size() > 1)
   {
-    obj_t value_type = checkExp(node->children[1]);
+    obj_t value_type = checkExp(node->children[1], currscope);
     if (value_type != integer)
     {
       invalidParameters(value_type, integer, node->key, node->line_no);
@@ -146,10 +150,10 @@ bool checkPinWrite(Node * node)
 ///         Will print error messages to stderr
 ///
 /// @return: true if valid parameters, false if
-bool checkIntegralArg(Node * node) 
+bool checkIntegralArg(Node * node, SymbolTable * currscope) 
 {
   bool ret = true;
-  obj_t type = checkSingleParamCmd(node);
+  obj_t type = checkSingleParamCmd(node, currscope);
   if (type != integer)
   {
     invalidParameters(type, node->key, node->line_no);
@@ -164,11 +168,11 @@ bool checkIntegralArg(Node * node)
 ///         Will print error messages to stderr
 ///
 /// @return: true if valid parameters, false if not
-bool checkSendMsg(Node * node) 
+bool checkSendMsg(Node * node, SymbolTable * currscope) 
 {
   bool ret = true;
-  obj_t id_type = checkExp(node->children[0]);
-  obj_t msg_type = checkExp(node->children[1]);
+  obj_t id_type = checkExp(node->children[0], currscope);
+  obj_t msg_type = checkExp(node->children[1], currscope);
 
   if (msg_type != can_msg_obj)
   {
@@ -191,10 +195,11 @@ bool checkSendMsg(Node * node)
 ///         Will print error messages to stderr
 ///
 /// @return: true if valid parameters, false if not
-bool checkReadMsg(Node * node) 
+bool checkReadMsg(Node * node, SymbolTable * currscope) 
 {
   bool ret = true;
-  obj_t id_type = checkExp(node->children[0]);
+  obj_t id_type = checkExp(node->children[0], currscope);
+  currscope->setRetval(new CAN_Msg());
 
   if (id_type != integer)
   {
@@ -211,10 +216,10 @@ bool checkReadMsg(Node * node)
 ///         Will print error messages to stderr
 ///
 /// @return: true if valid parameters, false if not
-obj_t checkSingleParamCmd(Node * node) 
+obj_t checkSingleParamCmd(Node * node, SymbolTable * currscope) 
 {
   Node * exp = node->children[0];
-  obj_t exptype = checkExp(exp);
+  obj_t exptype = checkExp(exp, currscope);
 
   if (exptype == invalid || exptype == none)
   {
@@ -231,9 +236,20 @@ obj_t checkSingleParamCmd(Node * node)
 ///         Will print error messages to stderr
 ///
 /// @return: true if valid parameters, false if not
-obj_t checkVardecl(Node * node) 
+obj_t checkVardecl(Node * node, SymbolTable * currscope) 
 {
-  obj_t exptype = checkExp(node->children[0]);
+  obj_t exptype = checkExp(node->children[0], currscope);
+  std::string varname = node->data.strval;
+
+  if (global_var_keys.find(varname) != global_var_keys.end())
+  {
+    if (varname != "RETVAL" && exptype != currscope->objectType(varname))
+    {
+      invalidGlobalOverwrite(varname, node->line_no, exptype);
+      exptype = invalid;
+    }
+    return exptype;
+  }
 
   if (exptype == invalid)
   {
@@ -254,7 +270,7 @@ obj_t checkVardecl(Node * node)
 /// @brief: checks the expressions for and / or in expect / assert calls
 ///         will print error message to stderr
 /// @return: the type that all sub expressions return, or invalid if some dont' match
-obj_t checkLogicalExp(Node * exp)
+obj_t checkLogicalExp(Node * exp, SymbolTable * currscope)
 {
     Node * lhs = exp->children[0];
     Node * rhs = exp->children[1];
@@ -265,12 +281,12 @@ obj_t checkLogicalExp(Node * exp)
     // recurse if logical conjuction
     if (lhs->node_type == and_node || lhs->node_type == or_node)
     {
-      lhst = checkLogicalExp(lhs);
+      lhst = checkLogicalExp(lhs, currscope);
     }
     else if (lhs->node_type == comparison_node)
     {
       lhs = lhs->children[0];
-      lhst = checkExp(lhs);
+      lhst = checkExp(lhs, currscope);
     }
     // Something done messed up
     else 
@@ -282,12 +298,12 @@ obj_t checkLogicalExp(Node * exp)
      // recurse if logical conjuction
     if (rhs->node_type == and_node || rhs->node_type == or_node)
     {
-      rhst = checkLogicalExp(rhs);
+      rhst = checkLogicalExp(rhs, currscope);
     }
     else if (rhs->node_type == comparison_node)
     {
       rhs = rhs->children[0];
-      rhst = checkExp(rhs);
+      rhst = checkExp(rhs, currscope);
     }
     // Something done messed up
     else 
@@ -298,7 +314,7 @@ obj_t checkLogicalExp(Node * exp)
 
     if (rhst != lhst)
     {
-      mismatched_type(lhst, rhst, exp->key);
+      mismatched_type(lhst, rhst, exp->line_no, exp->key);
       return invalid;
     }
 
@@ -318,31 +334,41 @@ obj_t checkLogicalExp(Node * exp)
 /// cannot be a none type
 ///
 /// @return: true if valid parameters, false if not
-bool checkExpectAssert(Node * node) 
+bool checkExpectAssert(Node * node, SymbolTable * currscope) 
 {
   bool ret = true;
+  obj_t exptype = none;
   Node * exp = node->children[0];
+  Object * retval = currscope->getObject("RETVAL");
 
   if (exp->node_type == and_node || exp->node_type == or_node)
   {
-    return checkLogicalExp(exp) != invalid;
+    exptype = checkLogicalExp(exp, currscope);
   }
   else if (exp->node_type == comparison_node)
   {
     std::string op = exp->data.strval;
     exp = exp->children[0];
-    obj_t type = checkExp(exp);
+    exptype = checkExp(exp, currscope);
 
     // these two ops can be used for all types, whereas the others
     // can only be used to compare integers
     if (op != "EQ" && op != "NE")
     {
-      if (type != integer)
+      if (exptype != integer)
       {
-        invalidParameters(type, integer, op, exp->line_no);
+        invalidParameters(exptype, integer, op, exp->line_no);
         ret = false;
       }
     }
+  }
+
+  // can't compare objects of different types
+  if (exptype != retval->type())
+  {
+    invalidParameters(exptype, retval->type(), "comparison", exp->line_no);
+    std::cerr << "\tDid you try to call expect/assert without a prior read call?\n\n";
+    ret = false;
   }
 
   return ret;
@@ -355,7 +381,7 @@ bool checkExpectAssert(Node * node)
 /// @note:  'Exp's can only have up to 2 immediate children
 ///
 /// @return: the object type that the expression resolves to
-obj_t checkExp(Node * exp)
+obj_t checkExp(Node * exp, SymbolTable * currscope)
 {
   if (exp == NULL)
   {
@@ -374,8 +400,8 @@ obj_t checkExp(Node * exp)
     Node * rhs = exp->children[1];
 
     // recursively check the left and right hand sides of the subtrees
-    obj_t lhst = checkExp(lhs);
-    obj_t rhst = checkExp(rhs);
+    obj_t lhst = checkExp(lhs, currscope);
+    obj_t rhst = checkExp(rhs, currscope);
 
     if (key != "+")
     {
@@ -408,7 +434,7 @@ obj_t checkExp(Node * exp)
   else if (children == 1)
   {
     Node * child = exp->children[0];
-    obj_t type = checkExp(child);
+    obj_t type = checkExp(child, currscope);
 
     if ((exp->node_type == unary_math_node 
          || exp->node_type == binary_math_node)

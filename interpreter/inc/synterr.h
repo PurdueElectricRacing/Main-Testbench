@@ -16,5 +16,7 @@ void noVariable(std::string key, int lineno);
 void notCallable(std::string name, int lineno);
 void invalidCanDecl(std::string decl, int lineno);
 void varAlreadyDefined(std::string name, int lineno);
+void invalidGlobalOverwrite(std::string var, int lineno, obj_t otype);
+void invalidWriteToReadOnlyValue(std::string var, int lineno = -1);
 
 #endif

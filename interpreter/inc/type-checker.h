@@ -4,14 +4,14 @@
 #include "ast.h"
 #include "symbol-table.h"
 
-obj_t checkSingleParamCmd(Node * node);
-obj_t checkExp(Node * exp);
-obj_t checkVardecl(Node * node);
-bool checkIntegralArg(Node * node);
-bool checkPinWrite(Node * node);
-bool checkSendMsg(Node * node);
-bool checkReadMsg(Node * node);
-bool checkExpectAssert(Node * root);
-bool checkTypes(Node * root, Tests *tests, Routines *routines);
+obj_t checkSingleParamCmd(Node * node, SymbolTable * currscope);
+obj_t checkExp(Node * exp, SymbolTable * currscope);
+obj_t checkVardecl(Node * node, SymbolTable * currscope);
+bool checkIntegralArg(Node * node, SymbolTable * currscope);
+bool checkPinWrite(Node * node, SymbolTable * currscope);
+bool checkSendMsg(Node * node, SymbolTable * currscope);
+bool checkReadMsg(Node * node, SymbolTable * currscope);
+bool checkExpectAssert(Node * root, SymbolTable * currscope);
+bool checkTypes(Node * root, SymbolTable * currscope, Tests *tests, Routines *routines);
 
 #endif

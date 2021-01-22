@@ -6,6 +6,7 @@
 #include <sstream>
 #include <iomanip>
 #include <exception>
+#include <iostream>
 
 
 class CAN_Msg : public Object
