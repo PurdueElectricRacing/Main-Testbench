@@ -26,7 +26,14 @@ class SymbolTable
 public:
   SymbolTable(Node * root = 0);
   virtual ~SymbolTable() { 
-    symbols.clear(); 
+
+    for (auto i = symbols.begin(); i != symbols.end(); i++)
+    {
+      delete i->second;
+      i->second = 0;
+    }
+    symbols.clear();
+
     if (root)
       delete root; 
   };
@@ -39,6 +46,7 @@ public:
 
   Object * getObject(std::string key);
   Node * getRoot() { return root; };
+  bool find(Object * o);
 
   virtual TableType_t type() {return generic_table;};
   friend class Perterpreter;
@@ -52,14 +60,7 @@ protected:
 private:
   void initGlobals() 
   {  
-    symbols = {
-                {"SERIAL_LOG_FILE", new String()},
-                {"RETVAL", new Object()},
-                {"LOG_FILE", new String()},
-                {"VERBOSE", new Integer(0)},
-                {"SERIAL_DEVICE", new String()},
-                {"GPIO_DEVICE", new String()}
-              };
+    symbols.emplace("RETVAL", new Object());
   }
   void setReadOnlyVar(std::string key, Object * o);
 };
@@ -99,11 +100,18 @@ class Routines
 {
 public:
   Routines() {};
-  virtual ~Routines() { routines.clear(); };
+  virtual ~Routines() { 
+    for (auto i = routines.begin(); i != routines.end(); i++)
+    {
+      delete i->second;
+      i->second = 0;
+    }  
+    routines.clear();
+  };
 
   Routine * getRoutine(std::string key, int lineno = 0);
   Routine * addRoutine(Node * node, SymbolTable * global);
-private:
+  bool hasRoutine(std::string name);
   std::map<std::string, Routine *> routines;
 };
 
@@ -113,14 +121,20 @@ class Tests
 {
 public:
   Tests() {};
-  virtual ~Tests() { tests.clear(); };
+  virtual ~Tests() {
+    for (auto i = tests.begin(); i != tests.end(); i++)
+    {
+      delete i->second;
+      i->second = 0;
+    }  
+    tests.clear();
+   };
 
   Test * addTest(Node * node, SymbolTable * global);
   Test * getTest(std::string key, int lineno = 0);
   bool hasTest(std::string key);
-
-private:
   std::map<std::string, Test *> tests;
+
 };
 
 

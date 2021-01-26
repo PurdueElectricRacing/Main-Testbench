@@ -78,38 +78,37 @@ void SymbolTable::setObject(std::string key, Object * o)
 {
   Object * old = 0;
 
-  // don't allow writing to global RO vars  
-  if (global_var_keys.find(key) != global_var_keys.end() && key != "RETVAL")
-  {
-    invalidWriteToReadOnlyValue(key);
-    return;
-  }
-
+  // check the current scope first, and delete it if it exists
   if (symbols.find(key) != symbols.end())
   {
     old = symbols[key];
     delete old;
     symbols[key] = o;
   }
-  if (type() != generic_table)
+  // if this table is not the global one, then check the global
+  // table for the symbol before adding it this table
+  else if (globals && globals->getObject(key))
   {
-    if (globals)
-    {
-      globals->setObject(key, o);
-    }
+    globals->setObject(key, o);
+  }
+  // object wasn't in globals and not in this one, add it to this one
+  else 
+  {
+    symbols.emplace(key, o);
   }
 }
 
 
-/// @brief: insert the object o into the table if key is not found
-///
-/// @return: true on success (unique) false on failure
-bool SymbolTable::insert(std::string key, Object * o) 
-{ 
-  if (symbols.find(key) != symbols.end())
-    return false;
-  symbols.emplace(key, o); 
-  return true;
+bool SymbolTable::find(Object * o)
+{
+  for (auto i = symbols.begin(); i != symbols.end(); i++)
+  {
+    if (i->second == o)
+    {
+      return true;
+    }
+  }
+  return false;
 }
 
 
@@ -184,6 +183,19 @@ Routine * Routines::getRoutine(std::string key, int lineno)
   funcUndefined(key, "routine", lineno);
   return NULL;
 }
+
+
+bool Routines::hasRoutine(std::string key)
+{
+  if (routines.find(key) != routines.end())
+  {
+    return true;
+  }
+  return false;
+}
+
+
+
 
 
 

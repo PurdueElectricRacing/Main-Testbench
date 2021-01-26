@@ -13,13 +13,17 @@ std::string stringifyNode(Node * node)
   {
     return std::to_string(node->data.intval);
   }
-  if (node->node_type == hexLiteral_node)
+  else if (node->node_type == hexLiteral_node)
   {
     std::stringstream ss;
     ss << std::hex << node->data.intval;
     return std::string("0x") + ss.str();
   }
   else if (node->node_type == can_msg_node)
+  {
+    return node->data.strval;
+  }
+  else if (node->node_type == stringLiteral_node)
   {
     return node->data.strval;
   }
@@ -40,6 +44,8 @@ std::string objTypeToString(obj_t t)
       return "Integer";
     case(can_msg_obj):
       return "CAN Message";
+    case(boolean):
+      return "boolean";
     default:
       return "Invalid";
   }
@@ -123,6 +129,14 @@ std::string nodeTypeToString(node_type_t t)
       return "Variable Declaration / assignment";
     case (statement_list):
       return "StatementList";
+    case (if_node):
+      return "if";
+    case (else_node):
+      return "else";
+    case (index_node):
+      return "CAN Message Index";
+    case(length_node):
+      return "length";
     default:
       return "Unknown";
   }

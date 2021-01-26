@@ -12,6 +12,7 @@ bool checkPinWrite(Node * node, SymbolTable * currscope);
 bool checkSendMsg(Node * node, SymbolTable * currscope);
 bool checkReadMsg(Node * node, SymbolTable * currscope);
 bool checkExpectAssert(Node * root, SymbolTable * currscope);
+bool checkIfElse(Node * node, SymbolTable * currscope, Tests *tests, Routines *routines);
 bool checkTypes(Node * root, SymbolTable * currscope, Tests *tests, Routines *routines);
 
 #endif

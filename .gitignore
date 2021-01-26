@@ -83,7 +83,10 @@ TestBench.*
 
 parser.*
 !parser.y
+!parser.cpp
 lexer.*
 !lexer.l
+!lexer.cpp
 *.o
 build
+perterpreter

@@ -52,7 +52,7 @@ void invalidCallType(std::string callee, Node * n)
 {
   std::cerr << "Error on line " << infilename << ":" << n->line_no << "\n"
             << "\t'" << callee << "' is not a valid routine.\n\n";   
-            errors++;
+  errors++;
 }
 
 
@@ -141,5 +141,16 @@ void invalidCanDecl(std::string decl, int lineno)
             << "'" << decl << "' is not a valid CAN message format Valid"
             " formats are of the form [0-9AaBbCcDdEeFf][0-9AaBbCcDdEeFf]? "
             "(\\|[0-9AaBbCcDdEeFf][0-9AaBbCcDdEeFf]?){0,7}.\n\n";
+  errors++;
+}
+
+
+
+/// @brief: called by interpreter if there is an out of bounds access to a can message
+void outOfBoundsError(int len, int actual, int lineno)
+{
+  std::cerr << "Error on line " << infilename << ":" << lineno << "\n\t"
+            << "Index " << actual << " is outside the current length boundary "
+            "of " << len << ". Perhaps you need to resize your CAN frame first?\n\n";
   errors++;
 }

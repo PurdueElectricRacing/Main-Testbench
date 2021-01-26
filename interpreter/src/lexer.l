@@ -129,19 +129,40 @@ LOW {
   return dstate;
 }
 
-(?i:GT)|(?i:LT)|(?i:GE)|(?i:LE)|(?i:NE)|(?i:EQ) {
+
+(NE)|"!=" {
+  yylval.str = new std::string("NE");
+  return NE;
+}
+
+(EQ)|"==" {
+  yylval.str = new std::string("EQ");
+  return EQ;
+}
+
+"if" {
+  return If;
+}
+
+"else" {
+  return Else;
+}
+
+(GT)|(LT)|(GE)|(LE)|">="|"<"|"<="|">" {
   yylval.str = new std::string(yytext);
   return comparison;
 }
 
 "--" {
-  yylval.str = new std::string(yytext);
   return minusminus;
 }
 
 "++" {
-  yylval.str = new std::string(yytext);
   return plusplus;
+}
+
+length {
+  return length;
 }
 
 (\"([^"\\]|\\.)*\")|(\'([^'\\]|\\.)*\')   {
@@ -201,7 +222,6 @@ LOW {
 }
 
 [={}\[\]()!\.,;\|] {
-  yylval.str = new std::string(yytext);
   return *yytext;
 }
 

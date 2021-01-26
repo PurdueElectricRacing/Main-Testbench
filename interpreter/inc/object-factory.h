@@ -78,6 +78,10 @@ static Object * createGeneric(obj_t otype)
 // ==========================================================
 
 
+/// @brief: creates a new object based on the information stored in the Node *
+///         if the node is a literal it will read the data value and return an 
+///         object with that data, otherwise it will create an empty object of 
+///         the type specified by otype
 static Object * createObject(Node * node, obj_t otype = invalid)
 {
   Object * ret = 0;

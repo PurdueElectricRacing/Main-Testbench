@@ -14,6 +14,7 @@ class CAN_Msg : public Object
 public:
 
   CAN_Msg(std::string input) : CAN_Msg() {
+    len = -1;
     parse(input);
   };
   CAN_Msg() {
@@ -51,6 +52,7 @@ public:
       data[i] = std::stoi(input);
     }
     valid = true;
+    len = i + 1;
   }
   catch (std::exception& e)
   {
@@ -76,6 +78,40 @@ public:
   };
 
   bool validData() {return valid;};
+
+  uint8_t get(int idx)
+  {
+    if (idx >= len)
+    {
+      return data[len - 1];
+    }
+    return data[idx];
+  };
+
+  uint8_t length() {
+    return len;
+  }
+
+  uint8_t setData(uint index, uint val) 
+  {
+    if (index > len)
+    {
+      return -1;
+    }
+    data[index] = val;
+    return val;
+  }
+
+  uint setLeng(uint8_t newlen) { 
+    if (newlen <= 8) 
+    {
+      len = newlen; 
+      return newlen;
+    }
+    std::cerr << "Runtime error: Cannot assign new length of " << newlen 
+              << " to CAN Frame. Length is greater than 8.\n\n";
+    return -1;
+  };
 
 private:
   uint8_t data[8];

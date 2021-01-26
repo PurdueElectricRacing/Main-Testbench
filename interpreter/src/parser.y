@@ -13,22 +13,26 @@
   std::string * str;
 }
 %define parse.error verbose
+%defines "inc/parser.h"
+%output "src/parser.cpp"
 
 %type <node> testScript Test TestList Routine RoutineList ReadMsgCall 
 %type <node> ReadPinCall SendMsgCall SetAnalogTail SetPinCall Statement 
-%type <node> StatementList VariableDecl Exp ExpectCall ExpectList LoopCall
-%type <node> PromptCall PrintCall DelayCall VarList
+%type <node> StatementList VariableAssign Exp ExpectCall LoopCall
+%type <node> PromptCall PrintCall DelayCall VarList Index CanManip
 
 %token <node> routine test loop delay read_pin set_pin perrint perrintln expect 
 %token <node> exit_tok prompt read_msg send_msg call forever dout din aout ain 
-%token <node> ';' '(' ')' '{' '}' '|' serialRx serialTx assert
-%token <str> stringLiteral identifier can_msg add mult plusplus 
-%token <str> minusminus comparison andToken orToken
+%token <node> ';' '(' ')' '{' '}' '|' serialRx serialTx assert If Else length
+%token <str> stringLiteral identifier can_msg add mult  
+%token <str> comparison andToken orToken NE EQ
 %token <i> integerLiteral hexLiteral dstate
+%token plusplus minusminus
 
-
-%left '(' ')' orToken andToken 
+%left '(' ')' orToken andToken NE EQ '[' ']'
 %right plusplus minusminus
+%nonassoc comparison If
+%nonassoc Else
 %left add
 %left mult
 %right '='
@@ -105,7 +109,7 @@ VarList:
   %empty {
       $$ = new Node(vardecl_list_node, yylineno);
   }
-  | VarList VariableDecl {
+  | VarList VariableAssign {
       $$ = $1;
       $$->addChild($2);
   };
@@ -162,29 +166,12 @@ StatementList:
   }
 
 
-ExpectList:
-  ExpectList andToken ExpectList {
-      $$ = new Node(and_node, yylineno);
-      $$->addChild($1);
-      $$->addChild($3);
-  }
-  | ExpectList orToken ExpectList {
-      $$ = new Node(or_node, yylineno);
-      $$->addChild($1);
-      $$->addChild($3);
-  }
-  | comparison Exp {
-      $$ = new Node(comparison_node, yylineno);
-      $$->setString($1);
-      $$->addChild($2);
-  };
-
 ExpectCall: 
-  expect ExpectList {
+  expect Exp {
       $$ = new Node(expect_node, yylineno);
       $$->addChild($2);
   }
-  | assert ExpectList {
+  | assert Exp {
       $$ = new Node(assert_node, yylineno);
       $$->addChild($2);
   };
@@ -210,9 +197,34 @@ PrintCall:
   };
 
 
+Index:
+  '[' Exp ']' {
+    $$ = new Node(index_node, yylineno);
+    $$->addChild($2);
+    $$->setString("[]");
+  }
+;
+
+
+
+CanManip:
+  identifier Index {
+    $$ = new Node(identifier_node, yylineno);
+    $$->setString($1);
+    $$->addChild($2);
+  }
+  | identifier '.' length{
+    $$ = new Node(identifier_node, yylineno);
+    $$->setString($1);
+    $$->addChild(new Node(length_node, yylineno));
+  }
+
 
 Exp:
-  Exp add Exp  {
+   CanManip {
+      $$ = $1;
+  }
+  | Exp add Exp  {
       if ($1->isLiteral() && $3->isLiteral())
       {
         node_type_t lhst = $1->node_type; 
@@ -227,15 +239,18 @@ Exp:
         {
           // TODO string concatenation
           Node * str = new Node(stringLiteral_node, $1->line_no);
+          std::cout << "node 1: " << stringifyNode($1) << " | node 2: " << stringifyNode($3) << "\n";
           std::string val = stringifyNode($1) + stringifyNode($3);
           str->setString(val);
           delete $1;
+          delete $2;
           delete $3;
           $$ = str;
         }
         else 
         {
-          $$ = new Node($2, yylineno);
+          $$ = new Node(binary_math_node, yylineno);
+          $$->setString($2);
           $$->addChild($1);
           $$->addChild($3);
         }
@@ -243,7 +258,8 @@ Exp:
   
       else 
       {
-        $$ = new Node($2, yylineno);
+        $$ = new Node(binary_math_node, yylineno);
+        $$->setString($2);
         $$->addChild($1);
         $$->addChild($3);
       }
@@ -260,47 +276,53 @@ Exp:
         }
          else 
         {
-          $$ = new Node($2, yylineno);
+          $$ = new Node(binary_math_node, yylineno);
+          $$->setString($2);
           $$->addChild($1);
+          delete $2;
           $$->addChild($3);
         }
       }
       else
       {
-        $$ = new Node($2, yylineno);
+        $$ = new Node(binary_math_node, yylineno);
+        $$->setString($2);
         $$->addChild($1);
         $$->addChild($3);
       }
 
   }
-  | Exp plusplus {
-      node_type_t type = $1->node_type;
+  | Exp NE Exp {
 
-      if ($1->isLiteral() && (type == integerLiteral_node 
-                              || type == hexLiteral_node))
-      {
-        $1->data.intval++;
-      }
-      else
-      {
-        $$ = new Node($2, yylineno);
-        $$->addChild($1);
-      }
-
+      $$ = new Node(comparison_node, yylineno);
+      $$->setString($2);
+      $$->addChild($1);
+      $$->addChild($3);
   }
-  | Exp minusminus {
-      node_type_t type = $1->node_type;
+  | Exp EQ Exp {
 
-      if ($1->isLiteral() && (type == integerLiteral_node 
-                              || type == hexLiteral_node))
-      {
-        $1->data.intval--;
-      }
-      else
-      {
-        $$ = new Node($2, yylineno);
-        $$->addChild($1);
-      }
+      $$ = new Node(comparison_node, yylineno);
+      $$->setString($2);
+      $$->addChild($1);
+      $$->addChild($3);
+  }
+  | Exp comparison Exp {
+      $$ = new Node(comparison_node, yylineno);
+      $$->setString($2);
+      $$->addChild($1);
+      $$->addChild($3);
+  }
+  | Exp andToken Exp {
+      $$ = new Node(and_node, yylineno);
+      $$->setString($2);
+      $$->addChild($1);
+      $$->addChild($3);
+  }
+  | Exp orToken Exp {
+      $$ = new Node(or_node, yylineno);
+      $$->setString($2);
+      $$->addChild($1);
+      $$->addChild($3);
   }
   | identifier {
     $$ = new Node(identifier_node, yylineno);
@@ -322,6 +344,7 @@ Exp:
     $$ = new Node(can_msg_node, yylineno);
     $$->setCanMsg($1);
   }
+
   | add Exp {
       node_type_t type = $2->node_type;
 
@@ -339,7 +362,8 @@ Exp:
       }
       else
       {
-        $$ = new Node($1, yylineno);
+        $$ = new Node(binary_math_node, yylineno);
+        $$->setString($1);
         $$->addChild($2);
       }
   }
@@ -348,57 +372,48 @@ Exp:
   };
 
 
-
-VariableDecl:
+VariableAssign:
   identifier '=' Exp ';'{
       $$ = new Node(vardecl_node, yylineno);
       $$->setString($1);
       $$->addChild($3);
-  };
+  }
+  | identifier Index '=' Exp ';' {
+      $$ = new Node(vardecl_node, yylineno);
+      $$->setString($1);
+      $$->addChild($4);
+      $$->addChild($2);
+  }
+  | identifier '.' length '=' Exp ';' {
+      $$ = new Node(vardecl_node, yylineno);
+      Node * l = new Node(length_node, yylineno);
+      l->setString("length");
+      $$->setString($1);
+      $$->addChild($5);
+      $$->addChild(l);
+  }
+  ;
 
 SendMsgCall:
-  send_msg hexLiteral can_msg {
+  send_msg hexLiteral Exp {
       $$ = new Node(send_msg_node, yylineno);
       Node * id = new Node(hexLiteral_node, yylineno);
-      Node * msg = new Node(can_msg_node, yylineno);
-
-      id->setInt($2);
-      msg->setCanMsg($3);
-
-      $$->addChild(id);
-      $$->addChild(msg);
-  }
-  | send_msg identifier can_msg {
-      $$ = new Node(send_msg_node, yylineno);
-      Node * msg = new Node(can_msg_node, yylineno);
-      Node * var = new Node (identifier_node, yylineno);
-      var->setString($2);
-      msg->setCanMsg($3);
-
-      $$->addChild(var);
-      $$->addChild(msg);
-  }
-  | send_msg hexLiteral identifier {
-      $$ = new Node(send_msg_node, yylineno);
-      Node * id = new Node(hexLiteral_node, yylineno);
-      Node * var = new Node (identifier_node, yylineno);
-      var->setString($3);
 
       id->setInt($2);
 
       $$->addChild(id);
-      $$->addChild(var);
+      $$->addChild($3);
   }
-  | send_msg identifier identifier {
+  | send_msg identifier Exp {
       $$ = new Node(send_msg_node, yylineno);
       Node * var = new Node (identifier_node, yylineno);
-      Node * var1 = new Node (identifier_node, yylineno);
       var->setString($2);
-      var1->setString($3);
 
       $$->addChild(var);
-      $$->addChild(var1);
+      $$->addChild($3);
   };
+
+
 
 
 ReadMsgCall:
@@ -518,20 +533,9 @@ DelayCall:
 
 
 LoopCall:
-  loop identifier '{' StatementList '}' {
+  loop Exp '{' StatementList '}' {
       $$ = new Node(loop_node, yylineno);
-      Node * var = new Node(identifier_node, yylineno);
-
-      var->setString($2);
-
-      $$->addChild(var);
-      $$->addChild($4);
-  }
-  | loop integerLiteral '{' StatementList '}' {
-      $$ = new Node(loop_node, yylineno);
-      Node * times = new Node(integerLiteral_node, yylineno);
-      times->setInt($2);
-      $$->addChild(times);
+      $$->addChild($2);
       $$->addChild($4);
   }
   | loop forever '{' StatementList '}' {
@@ -546,8 +550,23 @@ Statement: error ';' {
     yyerrok;
     yyclearin;
   }
-  |
-  VariableDecl{
+  | If '(' Exp ')' '{' StatementList '}' {
+      $$ = new Node(if_node, yylineno);
+      $$->addChild($3);
+      $$->addChild($6);
+  }
+  | If '(' Exp ')' '{' StatementList '}' Else '{' StatementList '}' {
+      $$ = new Node(if_node, yylineno);
+      $$->addChild($3);
+      $$->addChild($6);
+
+      Node * elsenode = new Node(else_node, yylineno);
+      elsenode->addChild($10);
+
+      $$->addChild(elsenode);
+
+  }
+  | VariableAssign{
       $$ = $1;
   }
   | call stringLiteral ';' {
@@ -594,6 +613,37 @@ Statement: error ';' {
   | exit_tok stringLiteral ';' {
       $$ = new Node(exit_node, yylineno);
       $$->setString($2);
+  }
+  | Exp plusplus ';'{
+      node_type_t type = $1->node_type;
+
+      if ($1->isLiteral() && (type == integerLiteral_node 
+                              || type == hexLiteral_node))
+      {
+        $1->data.intval++;
+      }
+      else
+      {
+        $$ = new Node(unary_math_node, yylineno);
+        $$->setString("++");
+        $$->addChild($1);
+      }
+
+  }
+  | Exp minusminus ';'{
+      node_type_t type = $1->node_type;
+
+      if ($1->isLiteral() && (type == integerLiteral_node 
+                              || type == hexLiteral_node))
+      {
+        $1->data.intval--;
+      }
+      else
+      {
+        $$ = new Node(unary_math_node, yylineno);
+        $$->setString("--");
+        $$->addChild($1);
+      }
   };
 
 
@@ -602,7 +652,7 @@ Statement: error ';' {
 
 void yyerror(const char * err)
 {
-  printf( "%s on line %d\n", err, yylineno);
+  printf("\n%s on line %d", err, yylineno);
 }
 
 

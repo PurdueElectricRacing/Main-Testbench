@@ -7,6 +7,7 @@
 struct Integer : public Object 
 {
   Integer(int val = 0) { value = val; };
+  virtual ~Integer() {};
   virtual obj_t type() {return integer;};
   virtual std::string stringify() { return std::to_string(value); };
 

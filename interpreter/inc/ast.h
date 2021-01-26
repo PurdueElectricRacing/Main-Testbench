@@ -15,16 +15,16 @@ class Node
 {
 public:
   std::vector<Node *> children;
-  node_type_t node_type;
+  node_type_t node_type = empty_node;
   std::string key;
-  int line_no;
-  obj_t type;
+  int line_no = 0;
+  obj_t type = none;
 
   // not using unions to minimize the necessity for pointers
   struct
   {
     std::string strval;
-    int intval;
+    int intval = 0;
   } data;
 
   Node(node_type_t t, int lineno) : Node(nodeTypeToString(t), lineno){
@@ -53,7 +53,9 @@ public:
     for (auto i = children.begin(); i != children.end(); i++)
     {
       delete (*i);
+      *i = 0;
     }
+    children.clear();
   };
 
   void print(int indent = 0);
@@ -78,7 +80,15 @@ public:
   bool isBinaryOp() {
     return node_type == binary_math_node;
   }
-  bool numChildren() { return children.size(); };
+  Node * getChild(node_type_t child_type) 
+  {
+    for (auto c = children.begin(); c != children.end(); c++)
+    {
+      if (child_type == (*c)->node_type)
+        return *c;
+    }
+    return 0;
+  }
   bool numChildren(Node * node) { return node->children.size(); };
 };
 

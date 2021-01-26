@@ -1,8 +1,9 @@
 // globals section
+
 GLOBAL = 69;
 
 
-// // end globals section
+// end globals section
 
 
 routine "this is a routine test" {
@@ -23,8 +24,11 @@ test "hello this is a test script" {
   var2 = "69 " + 5;  // ok
   // var2 = 5 + 6;  // invalid (already defined)
 
-  cars = 'this is okay too';
+  println var2; 
   
+
+  cars = 'this is okay too';
+
   set-pin DOUT 0 HIGH; // ok
   // set-pin DOUT Var1 HIGH;    // invalid (not integer for pin)
 
@@ -33,17 +37,27 @@ test "hello this is a test script" {
   // expect GT 6 and LT 0|0|0;  // invalid (not comparing the same data type) 
   // expect GT 6 and EQ 0|0|0;  // invalid (not comparing the same data type) 
   read-pin AIN 4;
-  expect EQ 5 + 6 + 90 / 32;  // ok
+  expect RETVAL EQ 5 + 6 + 90 / 32;  // ok
+  
   // expect EQ 5 + 6 + 90 / 32 + Var1; // error previous call returns an int
   // expect EQ 00|0F|55;  
   // prompt fudge;  // error undefined
 
-  print Var1; // ok
-  print 5 + 6 + 90 / 32 + Var1; // OK (though result might be whack)
+  println Var1; // ok
+  println 5 + 6 + 90 / 32 + Var1; // OK (though result might be whack)
 
-  
-  loop forever {  // should be ok
-    print "";
+  var3 = 69;
+  // loop forever {  // should be ok  
+  //   print "poop";
+  // }
+
+  if (var3 < 45)
+  {
+    println "Hooray";
+  }
+  else
+  {
+    println "Boo";
   }
 
   set-pin DOUT 3 HIGH;
@@ -52,19 +66,34 @@ test "hello this is a test script" {
                     // which would then be accessible forever by EXPECT and ASSERT
 
 
-  expect GT 6; // 
+  // expect RETVAL GT 6; // 
   prompt "Do some fancy stuff";
 
-  assert GT 6;
+  // assert RETVAL GT 6;
 
   call "this is a routine test";
+  
+  println "var3 = " + var3;
+  
+  
+  can = 00|0f|69;
+  loop var3 > 45 
+  {
+    
+    var1 = "string";
 
+    can[0]++;
+    expect RETVAL == 50;
 
+    if (1 < 2)
+    {
+      println "goodbye";
+    }
 
-
-  loop 4 {
-    perrintln "Cheese biscuits";
-    perrint "Sausage biscuits";
+    var3--;
+    println "var3 = " + var3;
+    // perrintln "Cheese biscuits";
+    // perrint "Sausage biscuits";
   }
 }
 

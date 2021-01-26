@@ -11,6 +11,7 @@ enum obj_t
   integer,
   can_msg_obj,
   invalid,
+  boolean,
 };
 
 
@@ -52,6 +53,11 @@ enum node_type_t
   can_msg_node,
   vardecl_node,
   vardecl_list_node,
+  if_node,
+  else_node,
+  index_node,
+  length_node,
+  empty_node,
 };
 
 
