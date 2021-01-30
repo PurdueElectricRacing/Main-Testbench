@@ -6,12 +6,15 @@
 
 struct String : public Object
 {
-  String(std::string val = "") {value = val;};
+  String(std::string val = "") {
+    o_type = str;
+    value = val;};
   String(std::string * val) : String(*val){ delete val;};
   virtual obj_t type() {return str;};
   virtual std::string stringify() { return value; };
 
   std::string value;
+
 };
 
 #endif

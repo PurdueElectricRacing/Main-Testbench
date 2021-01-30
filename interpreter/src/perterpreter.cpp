@@ -7,6 +7,7 @@
 #include "perterpreter.h"
 #include "operators.h"
 #include "object-factory.h"
+#include "serial-device.h"
 
 #include <exception>
 #include <iostream>
@@ -15,6 +16,8 @@
 #include <chrono>
 #include <thread>
 #include <memory>
+#include <QIODevice>
+#include <QCoreApplication>
 
 extern FILE *yyin;
 extern std::string infilename;
@@ -34,17 +37,25 @@ bool halt_execution = false;
 ///         call-stack allocates a new object and forgets to delete it.
 void clearIntermediateOps(SymbolTable * scope)
 {
-  for (auto op = intermediate_operands.begin(); 
-       op != intermediate_operands.end();
-       op++)
+  auto temp_ops = intermediate_operands;
+
+  for (auto op = temp_ops.begin(); 
+       op != temp_ops.end();
+       ++op)
   {
     Object * operand = *op;
-    if (!scope->find(operand))
+    if (operand)
     {
-      delete operand;
+      if (!scope->find(operand) && operand)
+      {
+        intermediate_operands.erase(operand);
+      }
+      else
+      {
+        intermediate_operands.extract(operand);
+      }
     }
   }
-  intermediate_operands.clear();
 }
 
 
@@ -186,6 +197,7 @@ void Perterpreter::perterpretExpectAssert(Node * node, SymbolTable * scope)
   Node * exp = node->children[0];
   Object * expectation = perterpretExp(exp, scope);
   Integer * i = static_cast<Integer *>(expectation);
+
 
   if (!i->value)
   {
@@ -348,7 +360,6 @@ void Perterpreter::perterpretVardecl(Node * node, SymbolTable * scope)
     scope->setObject(node->data.strval, rhso);
   }
 
-  clearIntermediateOps(scope);
 }
 
 
@@ -367,7 +378,6 @@ void Perterpreter::perterpretPrint(Node * node, SymbolTable * scope)
     std::cout << std::endl;
   }
 
-  clearIntermediateOps(scope);
 }
 
 
@@ -382,7 +392,6 @@ void Perterpreter::perterpretPrompt(Node * node, SymbolTable * scope)
   std::string whatever;
 
   printf("%s\n", value->stringify().c_str());
-  clearIntermediateOps(scope);
   printf("Press enter to continue...\n");
 
   std::getline(std::cin, whatever);
@@ -416,7 +425,6 @@ void Perterpreter::perterpretIf(Node * node, SymbolTable * scope)
     }
   }
 
-  clearIntermediateOps(scope);
 }
 
 
@@ -429,7 +437,6 @@ void Perterpreter::perterpretCall(Node * node, SymbolTable * scope)
   Routine * r = routines->getRoutine(routine_name, node->line_no);
   perterpretNode(r->getRoot(), r);
 
-  clearIntermediateOps(scope);
 }
 
 
@@ -459,7 +466,6 @@ void Perterpreter::perterpretLoop(Node * node, SymbolTable * scope)
       i = static_cast<Integer *>(perterpretExp(exp, scope));
     }
   }  
-  clearIntermediateOps(scope);
 }
 
 
@@ -469,8 +475,8 @@ void Perterpreter::perterpretLoop(Node * node, SymbolTable * scope)
 ///         non-list node will result in undefined behavior.
 void Perterpreter::perterpretNode(Node * node, SymbolTable * scope)
 {
-  for (auto n = node->children.begin(); n != node->children.end(),
-       !halt_execution; n++)
+  for (auto n = node->children.begin(); n != node->children.end() 
+      && !halt_execution; ++n)
   {
     Node * child = *n;
     node_type_t nodetype = child->node_type;
@@ -509,6 +515,8 @@ void Perterpreter::perterpretNode(Node * node, SymbolTable * scope)
         break;
       case (exit_node):
         // TODO exit code
+        std::cout << node->data.strval << "\n";
+        exit(0);
         break;
       case (serial_tx):
         break;
@@ -518,12 +526,16 @@ void Perterpreter::perterpretNode(Node * node, SymbolTable * scope)
         perterpretPrompt(child, scope);
         break;
       case (digital_read):
+        perterpretDRead(child, scope);
         break;
       case (digital_write):
+        perterpretDWrite(child, scope);
         break;
       case (analog_read):
+        perterpretAread(child, scope);
         break;
       case (analog_write):
+        perterpretAwrite(child, scope);
         break;
       case (send_msg_node):
         break;
@@ -547,6 +559,8 @@ void Perterpreter::perterpret(std::string func)
   if (func.empty())
   {
     // interpret all the tests only
+    perterpretNode(root, global_table);
+
     for (auto t = tests->tests.begin(); t != tests->tests.end(); t++)
     {
       Test * test = t->second; 
@@ -561,7 +575,9 @@ void Perterpreter::perterpret(std::string func)
       {
         // TODO output that test is failed
       }
+      
 
+      // TODO timer to periodically garbage collect
       // TODO color output conditionally 
     }
   }
@@ -580,13 +596,107 @@ void Perterpreter::perterpret(std::string func)
 
 
 
+void Perterpreter::perterpretSerialTx(Node * node, SymbolTable * scope)
+{
+  String * val = static_cast<String *>(getObject(node->children[0], scope));
+  QString cmd = val->value.c_str();
+  serial_device->sendCommand(cmd);
+}
+
+
+
+
+void Perterpreter::perterpretSerialRx(Node * node, SymbolTable * scope)
+{
+
+  // TODO generic read from serial here (NO COMMAND SPECIFIED TO FUNC)
+}
+
+
+
+
+/// @brief: Perform the operation for writing a digital pin to the state 
+///         specified in the script. Sends a serial command to an arduino 
+///         controller
+void Perterpreter::perterpretDWrite(Node * node, SymbolTable * scope)
+{
+  Node * pin_node = node->children[0];
+  Integer * pin = static_cast<Integer*>(getObject(pin_node, scope));
+  int state = node->data.intval;
+  gpio_device->digitalWrite(pin->value, state);
+}
+
+
+
+/// @brief: Perform the operation for writing a DAC pin to the state 
+///         specified in the script. Sends a serial command to an arduino 
+///         controller
+void Perterpreter::perterpretAwrite(Node * node, SymbolTable * scope)
+{
+  Node * pin_node = node->children[0];
+  Node * val_node = node->children[1];
+  Integer * pin = static_cast<Integer*>(getObject(pin_node, scope));
+  Integer * value = static_cast<Integer *>(getObject(val_node, scope));
+  gpio_device->analogWrite(pin->value, value->value);
+}
+
+
+
+/// @brief: Perform the operation for reading a digital pin's state 
+///         specified in the script. Sends a serial command to an arduino 
+///         controller
+void Perterpreter::perterpretDRead(Node * node, SymbolTable * scope)
+{
+  Node * pin_node = node->children[0];
+  Integer * pin = static_cast<Integer*>(getObject(pin_node, scope));
+  Integer * value = new Integer(gpio_device->digitalRead(pin->value));
+  scope->setRetval(value);
+}
+
+
+
+
+/// @brief: Perform the operation for reading an analog pin's state 
+///         specified in the script. Sends a serial command to an arduino 
+///         controller
+void Perterpreter::perterpretAread(Node * node, SymbolTable * scope)
+{
+  Node * pin_node = node->children[0];
+  Integer * pin = static_cast<Integer*>(getObject(pin_node, scope));
+  Integer * value = new Integer(gpio_device->analogRead(pin->value));
+  scope->setRetval(value);
+}
+
+
+
+
+
+void Perterpreter::perterpretSendMsg(Node * node, SymbolTable * scope)
+{
+  Node * addrnode = node->children[0];
+  Node * msgnode = node->children[1];
+  Integer * address = static_cast<Integer *>(getObject(addrnode, scope));
+  // TODO broadcast CAN message
+}
+
+
+
+
+void Perterpreter::perterpretReadMsg(Node * node, SymbolTable * scope)
+{
+  Node * addrnode = node->children[0];
+  Integer * address = static_cast<Integer *>(getObject(addrnode, scope));
+}
+
+
+
+
 // =============================================================================
 #ifdef STANDALONE
 int main (int argc, char ** argv)
 {
   using namespace cxxopts;
-  std::ofstream f;
-  f << "poop";
+  QCoreApplication app(argc, argv);
 
   Perterpreter p;
   
@@ -718,15 +828,24 @@ try
     exit(-1);
   }
 
-  // TODO support the other command line options
   if (!device.empty())
   {
     p.setSerialDev(device);
+  }
+  else
+  {
+    std::cerr << "No serial device selected. Any calls to serial-tx or "
+                 "serial-rx will print an error message.\n";
   }
 
   if (!io.empty())
   {
     p.setGpioDev(io);
+  }
+  else
+  {
+    std::cout << "\n\nNo GPIO device was specified. Choose one from the list below\n\n";
+    p.selectGpioDev();
   }
 
   if (!logfile.empty())
@@ -736,6 +855,7 @@ try
 
   if (!toutfile.empty())
   {
+
   }
   p.perterpret();
 }

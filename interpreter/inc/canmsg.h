@@ -16,6 +16,7 @@ public:
   CAN_Msg(std::string input) : CAN_Msg() {
     len = -1;
     parse(input);
+    o_type = can_msg_obj;
   };
   CAN_Msg() {
     memset(data, 0, 8);

@@ -129,7 +129,7 @@ bool checkIfElse(Node * node, SymbolTable * currscope, Tests *tests, Routines *r
   bool ret = true;
   
   // can't have non-boolean types as conditions
-  if (exptype != boolean && exptype != invalid)
+  if (exptype != boolean && exptype != integer && exptype != invalid)
   {
     mismatched_type(exptype, boolean, node->line_no, "if");
     return false;
@@ -395,20 +395,19 @@ obj_t checkExp(Node * exp, SymbolTable * currscope)
     }
     else if (key == "+")
     {
-      // cannot concatenate int and can message
-      if ((lhst == integer && rhst == can_msg_obj) 
-          || (lhst == can_msg_obj && rhst == integer))
+      // concatenate a string and something else
+      if (lhst == str || rhst == str)
+      {
+        ret = str;
+      }
+      else if (lhst != integer || rhst != integer)
       {
         mismatched_type(lhst, rhst, lhs->line_no, key);
         return invalid;
       }
-      else if (lhst == str || rhst == str)
-      {
-        ret = str;
-      }
       else
       {
-        ret = invalid;
+        ret = lhst;
       }
     }
     // some other math node 

@@ -26,7 +26,8 @@ void Node::print(int indent)
   cout << "\n";
 
   cout << INDENT(indent) << "Line number: " << to_string(line_no) << "\n"
-       << INDENT(indent) << "Children: " << children.size() 
+       << INDENT(indent) << "Children: " << children.size() << "\n"
+       << INDENT(indent) << indent
        << "\n===============================================\n";
 
   for (auto itr = children.begin(); itr != children.end(); ++itr)

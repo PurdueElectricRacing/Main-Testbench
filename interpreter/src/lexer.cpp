@@ -647,8 +647,9 @@ char *yytext;
   #include <stdio.h>
   #include <string>
   #include <iostream>
-#line 650 "src/lexer.cpp"
+  #define YY_USER_ACTION yylloc.first_line = yylloc.last_line = yylineno;
 #line 651 "src/lexer.cpp"
+#line 652 "src/lexer.cpp"
 
 #define INITIAL 0
 
@@ -865,10 +866,10 @@ YY_DECL
 		}
 
 	{
-#line 11 "src/lexer.l"
+#line 12 "src/lexer.l"
 
 
-#line 871 "src/lexer.cpp"
+#line 872 "src/lexer.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -938,185 +939,185 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 13 "src/lexer.l"
+#line 14 "src/lexer.l"
 {}
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 14 "src/lexer.l"
+#line 15 "src/lexer.l"
 {}
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 16 "src/lexer.l"
+#line 17 "src/lexer.l"
 {
   // double slash comment
 }  
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 19 "src/lexer.l"
+#line 20 "src/lexer.l"
 {
   // # comment
 }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 23 "src/lexer.l"
+#line 24 "src/lexer.l"
 { // this syntax allows for case insensitivity
   return prompt;
 }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 27 "src/lexer.l"
+#line 28 "src/lexer.l"
 {
   return perrint;
 }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 31 "src/lexer.l"
+#line 32 "src/lexer.l"
 {
   return perrintln;
 }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 35 "src/lexer.l"
+#line 36 "src/lexer.l"
 {
   return expect;
 }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 39 "src/lexer.l"
+#line 40 "src/lexer.l"
 {
   return assert;
 }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 43 "src/lexer.l"
+#line 44 "src/lexer.l"
 {
   return exit_tok;
 }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 47 "src/lexer.l"
+#line 48 "src/lexer.l"
 {
   return read_msg;
 }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 51 "src/lexer.l"
+#line 52 "src/lexer.l"
 {
   return send_msg;
 }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 55 "src/lexer.l"
+#line 56 "src/lexer.l"
 {
   return read_pin;
 }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 59 "src/lexer.l"
+#line 60 "src/lexer.l"
 {
   return set_pin;
 }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 64 "src/lexer.l"
+#line 65 "src/lexer.l"
 {
   return delay;
 }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 68 "src/lexer.l"
+#line 69 "src/lexer.l"
 {
   return routine;
 }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 72 "src/lexer.l"
+#line 73 "src/lexer.l"
 {
   return test;
 }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 76 "src/lexer.l"
+#line 77 "src/lexer.l"
 {
   return loop;
 }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 80 "src/lexer.l"
+#line 81 "src/lexer.l"
 {
   return call;
 }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 84 "src/lexer.l"
+#line 85 "src/lexer.l"
 {
   return forever;
 }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 88 "src/lexer.l"
+#line 89 "src/lexer.l"
 {
   return aout;
 }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 92 "src/lexer.l"
+#line 93 "src/lexer.l"
 {
   return ain;
 }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 96 "src/lexer.l"
+#line 97 "src/lexer.l"
 {
   return dout;
 }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 100 "src/lexer.l"
+#line 101 "src/lexer.l"
 {
   return din;
 }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 104 "src/lexer.l"
+#line 105 "src/lexer.l"
 {
   return serialTx;
 }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 108 "src/lexer.l"
+#line 109 "src/lexer.l"
 {
   return serialRx;
 }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 112 "src/lexer.l"
+#line 113 "src/lexer.l"
 {
   yylval.str = new std::string(yytext);
   return andToken;
@@ -1124,7 +1125,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 117 "src/lexer.l"
+#line 118 "src/lexer.l"
 {
   yylval.str = new std::string(yytext);
   return orToken;
@@ -1132,7 +1133,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 122 "src/lexer.l"
+#line 123 "src/lexer.l"
 {
   yylval.i = 1;
   return dstate;
@@ -1140,7 +1141,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 127 "src/lexer.l"
+#line 128 "src/lexer.l"
 { 
   yylval.i = 0;
   return dstate;
@@ -1148,7 +1149,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 133 "src/lexer.l"
+#line 134 "src/lexer.l"
 {
   yylval.str = new std::string("NE");
   return NE;
@@ -1156,7 +1157,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 138 "src/lexer.l"
+#line 139 "src/lexer.l"
 {
   yylval.str = new std::string("EQ");
   return EQ;
@@ -1164,21 +1165,21 @@ YY_RULE_SETUP
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 143 "src/lexer.l"
+#line 144 "src/lexer.l"
 {
   return If;
 }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 147 "src/lexer.l"
+#line 148 "src/lexer.l"
 {
   return Else;
 }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 151 "src/lexer.l"
+#line 152 "src/lexer.l"
 {
   yylval.str = new std::string(yytext);
   return comparison;
@@ -1186,21 +1187,21 @@ YY_RULE_SETUP
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 156 "src/lexer.l"
+#line 157 "src/lexer.l"
 {
   return minusminus;
 }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 160 "src/lexer.l"
+#line 161 "src/lexer.l"
 {
   return plusplus;
 }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 164 "src/lexer.l"
+#line 165 "src/lexer.l"
 {
   return length;
 }
@@ -1208,7 +1209,7 @@ YY_RULE_SETUP
 case 39:
 /* rule 39 can match eol */
 YY_RULE_SETUP
-#line 168 "src/lexer.l"
+#line 169 "src/lexer.l"
 {
   /* quoted string */
   std::string s = yytext;
@@ -1235,7 +1236,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 192 "src/lexer.l"
+#line 193 "src/lexer.l"
 {
   yylval.i = std::stoi(yytext);
   return integerLiteral;
@@ -1243,7 +1244,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 197 "src/lexer.l"
+#line 198 "src/lexer.l"
 {
   yylval.i = std::stoi(yytext);
   return hexLiteral;
@@ -1251,7 +1252,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 202 "src/lexer.l"
+#line 203 "src/lexer.l"
 {
   yylval.str = new std::string(yytext);
   return can_msg;
@@ -1259,7 +1260,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 207 "src/lexer.l"
+#line 208 "src/lexer.l"
 {
   yylval.str = new std::string(yytext);
   return mult;
@@ -1267,7 +1268,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 212 "src/lexer.l"
+#line 213 "src/lexer.l"
 {
   yylval.str = new std::string(yytext);
   return add;
@@ -1275,7 +1276,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 217 "src/lexer.l"
+#line 218 "src/lexer.l"
 { 
   /* capture any grouping of alpha numeric characters and assume 
                    it to be an Identifier */
@@ -1285,17 +1286,17 @@ YY_RULE_SETUP
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 224 "src/lexer.l"
+#line 225 "src/lexer.l"
 {
   return *yytext;
 }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 229 "src/lexer.l"
+#line 230 "src/lexer.l"
 ECHO;
 	YY_BREAK
-#line 1298 "src/lexer.cpp"
+#line 1299 "src/lexer.cpp"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2312,5 +2313,5 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 229 "src/lexer.l"
+#line 230 "src/lexer.l"
 

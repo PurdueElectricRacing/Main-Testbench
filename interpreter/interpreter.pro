@@ -3,13 +3,14 @@
 
 #TARGET = interpreter
 
-QT = core gui widgets
+QT = core gui widgets serialport
 
 CONFIG += c++17 warn_on debug
 
 INCLUDEPATH += $$PWD/inc
 DESTDIR = build/
 SRCDIR = $$PWD/src
+OBJECTS_DIR = obj/
 
 
 flex.output = src/lexer.cpp
@@ -29,14 +30,14 @@ unix:!macx {
    # linux compiler commands
    flex.commands = flex -o src/lexer.cpp src/lexer.l
    bison.commands = bison -v -g -d -t --color -o src/parser.cpp --defines=inc/parser.h src/parser.y
+   QMAKE_EXTRA_COMPILERS += bison flex
 }
 win32 {
    # windows compiler flags
-   # TODO figure out how to do this on windows
+   # TODO figure out how to build flex/bison files on winders
 }
 
 
-QMAKE_EXTRA_COMPILERS += bison flex
 MOC_DIR = $$PWD/moc
 TARGET = /perterpreter
 
@@ -59,7 +60,9 @@ HEADERS = \
    $$PWD/inc/type-checker.h \
    $$PWD/inc/typedefs.h \
    $$PWD/src/lexer.l \
-   $$PWD/src/parser.y
+   $$PWD/src/parser.y \
+   $$PWD/inc/serial-device.h \
+
 
 SOURCES = \
    $$PWD/src/ast.cpp \
@@ -70,7 +73,7 @@ SOURCES = \
    $$PWD/src/stringify.cpp \
    $$PWD/src/symbol-table.cpp \
    $$PWD/src/synterr.cpp \
-   $$PWD/src/type-checker.cpp
+   $$PWD/src/type-checker.cpp \
 
 INCLUDEPATH = \
     $$PWD/inc

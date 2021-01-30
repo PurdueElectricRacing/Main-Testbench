@@ -13,6 +13,7 @@ struct Object
   virtual std::string stringify(){ 
     return std::to_string((size_t)this) + ": type: none";
   };
+  obj_t o_type = none;
 };
 
 

@@ -37,6 +37,7 @@
 %left mult
 %right '='
 
+%locations
 
 
 %{
@@ -130,7 +131,7 @@ RoutineList:
 
 Routine:
   routine stringLiteral '{' StatementList '}' {
-    int lineno = yylineno - $4->line_no;
+    int lineno = @1.first_line - $4->line_no;
     $$ = new Node(routine_node, lineno);
     $$->setString($2);
     $$->addChild($4);
@@ -148,7 +149,7 @@ TestList:
 
 Test:
   test stringLiteral '{' StatementList '}' {
-    int lineno = yylineno - $4->line_no;
+    int lineno = @1.first_line - $4->line_no;
     $$ = new Node(test_node, lineno);
     $$->setString($2);
     $$->addChild($4);
@@ -168,18 +169,18 @@ StatementList:
 
 ExpectCall: 
   expect Exp {
-      $$ = new Node(expect_node, yylineno);
+      $$ = new Node(expect_node, @1.first_line);
       $$->addChild($2);
   }
   | assert Exp {
-      $$ = new Node(assert_node, yylineno);
+      $$ = new Node(assert_node, @1.first_line);
       $$->addChild($2);
   };
 
 
 PromptCall:
   prompt Exp {
-    $$ = new Node(prompt_node, yylineno);
+    $$ = new Node(prompt_node, @1.first_line);
     $$->addChild($2);
   };
 
@@ -188,18 +189,18 @@ PromptCall:
 
 PrintCall:
   perrint Exp {
-      $$ = new Node(print, yylineno);
+      $$ = new Node(print, @1.first_line);
       $$->addChild($2);
   };
   | perrintln Exp {
-      $$ = new Node(println, yylineno);
+      $$ = new Node(println, @1.first_line);
       $$->addChild($2);
   };
 
 
 Index:
   '[' Exp ']' {
-    $$ = new Node(index_node, yylineno);
+    $$ = new Node(index_node, @2.first_line);
     $$->addChild($2);
     $$->setString("[]");
   }
@@ -209,14 +210,14 @@ Index:
 
 CanManip:
   identifier Index {
-    $$ = new Node(identifier_node, yylineno);
+    $$ = new Node(identifier_node, @1.first_line);
     $$->setString($1);
     $$->addChild($2);
   }
   | identifier '.' length{
-    $$ = new Node(identifier_node, yylineno);
+    $$ = new Node(identifier_node, @1.first_line);
     $$->setString($1);
-    $$->addChild(new Node(length_node, yylineno));
+    $$->addChild(new Node(length_node, @1.first_line));
   }
 
 
@@ -249,7 +250,7 @@ Exp:
         }
         else 
         {
-          $$ = new Node(binary_math_node, yylineno);
+          $$ = new Node(binary_math_node, @1.first_line);
           $$->setString($2);
           $$->addChild($1);
           $$->addChild($3);
@@ -258,7 +259,7 @@ Exp:
   
       else 
       {
-        $$ = new Node(binary_math_node, yylineno);
+        $$ = new Node(binary_math_node, @1.first_line);
         $$->setString($2);
         $$->addChild($1);
         $$->addChild($3);
@@ -276,7 +277,7 @@ Exp:
         }
          else 
         {
-          $$ = new Node(binary_math_node, yylineno);
+          $$ = new Node(binary_math_node, @1.first_line);
           $$->setString($2);
           $$->addChild($1);
           delete $2;
@@ -285,7 +286,7 @@ Exp:
       }
       else
       {
-        $$ = new Node(binary_math_node, yylineno);
+        $$ = new Node(binary_math_node, @1.first_line);
         $$->setString($2);
         $$->addChild($1);
         $$->addChild($3);
@@ -294,54 +295,54 @@ Exp:
   }
   | Exp NE Exp {
 
-      $$ = new Node(comparison_node, yylineno);
+      $$ = new Node(comparison_node, @1.first_line);
       $$->setString($2);
       $$->addChild($1);
       $$->addChild($3);
   }
   | Exp EQ Exp {
 
-      $$ = new Node(comparison_node, yylineno);
+      $$ = new Node(comparison_node, @1.first_line);
       $$->setString($2);
       $$->addChild($1);
       $$->addChild($3);
   }
   | Exp comparison Exp {
-      $$ = new Node(comparison_node, yylineno);
+      $$ = new Node(comparison_node, @1.first_line);
       $$->setString($2);
       $$->addChild($1);
       $$->addChild($3);
   }
   | Exp andToken Exp {
-      $$ = new Node(and_node, yylineno);
+      $$ = new Node(and_node, @1.first_line);
       $$->setString($2);
       $$->addChild($1);
       $$->addChild($3);
   }
   | Exp orToken Exp {
-      $$ = new Node(or_node, yylineno);
+      $$ = new Node(or_node, @1.first_line);
       $$->setString($2);
       $$->addChild($1);
       $$->addChild($3);
   }
   | identifier {
-    $$ = new Node(identifier_node, yylineno);
+    $$ = new Node(identifier_node, @1.first_line);
     $$->setString($1);
   }
   | stringLiteral {
-    $$ = new Node(stringLiteral_node, yylineno);
+    $$ = new Node(stringLiteral_node, @1.first_line);
     $$->setString($1);
   }
   | integerLiteral {
-    $$ = new Node(integerLiteral_node, yylineno);
+    $$ = new Node(integerLiteral_node, @1.first_line);
     $$->setInt($1);
   }
   | hexLiteral {
-    $$ = new Node(hexLiteral_node, yylineno);
+    $$ = new Node(hexLiteral_node, @1.first_line);
     $$->setInt($1);
   }
   | can_msg {
-    $$ = new Node(can_msg_node, yylineno);
+    $$ = new Node(can_msg_node, @1.first_line);
     $$->setCanMsg($1);
   }
 
@@ -362,7 +363,7 @@ Exp:
       }
       else
       {
-        $$ = new Node(binary_math_node, yylineno);
+        $$ = new Node(binary_math_node, @1.first_line);
         $$->setString($1);
         $$->addChild($2);
       }
@@ -374,19 +375,19 @@ Exp:
 
 VariableAssign:
   identifier '=' Exp ';'{
-      $$ = new Node(vardecl_node, yylineno);
+      $$ = new Node(vardecl_node, @1.first_line);
       $$->setString($1);
       $$->addChild($3);
   }
   | identifier Index '=' Exp ';' {
-      $$ = new Node(vardecl_node, yylineno);
+      $$ = new Node(vardecl_node, @1.first_line);
       $$->setString($1);
       $$->addChild($4);
       $$->addChild($2);
   }
   | identifier '.' length '=' Exp ';' {
-      $$ = new Node(vardecl_node, yylineno);
-      Node * l = new Node(length_node, yylineno);
+      $$ = new Node(vardecl_node, @1.first_line);
+      Node * l = new Node(length_node, @1.first_line);
       l->setString("length");
       $$->setString($1);
       $$->addChild($5);
@@ -396,8 +397,8 @@ VariableAssign:
 
 SendMsgCall:
   send_msg hexLiteral Exp {
-      $$ = new Node(send_msg_node, yylineno);
-      Node * id = new Node(hexLiteral_node, yylineno);
+      $$ = new Node(send_msg_node, @1.first_line);
+      Node * id = new Node(hexLiteral_node, @1.first_line);
 
       id->setInt($2);
 
@@ -405,8 +406,8 @@ SendMsgCall:
       $$->addChild($3);
   }
   | send_msg identifier Exp {
-      $$ = new Node(send_msg_node, yylineno);
-      Node * var = new Node (identifier_node, yylineno);
+      $$ = new Node(send_msg_node, @1.first_line);
+      Node * var = new Node (identifier_node, @1.first_line);
       var->setString($2);
 
       $$->addChild(var);
@@ -418,14 +419,14 @@ SendMsgCall:
 
 ReadMsgCall:
   read_msg hexLiteral  {
-      $$ = new Node(read_msg_node, yylineno);
-      Node * id = new Node(hexLiteral_node, yylineno);
+      $$ = new Node(read_msg_node, @1.first_line);
+      Node * id = new Node(hexLiteral_node, @1.first_line);
       id->setInt($2);
       $$->addChild(id);
   }
   | read_msg identifier {
-      $$ = new Node(read_msg_node, yylineno);
-      Node * var = new Node(identifier_node, yylineno);
+      $$ = new Node(read_msg_node, @1.first_line);
+      Node * var = new Node(identifier_node, @1.first_line);
       var->setString($2);
       $$->addChild(var);
   };
@@ -434,26 +435,26 @@ ReadMsgCall:
 
 ReadPinCall:
   read_pin ain integerLiteral {
-      $$ = new Node(analog_read, yylineno);
-      Node * pin = new Node(integerLiteral_node, yylineno);
+      $$ = new Node(analog_read, @1.first_line);
+      Node * pin = new Node(integerLiteral_node, @1.first_line);
       pin->setInt($3);
       $$->addChild(pin);
   }
   | read_pin ain identifier {
-      $$ = new Node(analog_read, yylineno);
-      Node * var = new Node(identifier_node, yylineno);
+      $$ = new Node(analog_read, @1.first_line);
+      Node * var = new Node(identifier_node, @1.first_line);
       var->setString($3);
       $$->addChild(var);
   }
   | read_pin din integerLiteral {
-      $$ = new Node(digital_read, yylineno);
-      Node * pin = new Node(integerLiteral_node, yylineno);
+      $$ = new Node(digital_read, @1.first_line);
+      Node * pin = new Node(integerLiteral_node, @1.first_line);
       pin->setInt($3);
       $$->addChild(pin);
   }
   | read_pin din identifier {
-      $$ = new Node(digital_read, yylineno);
-      Node * var = new Node(identifier_node, yylineno);
+      $$ = new Node(digital_read, @1.first_line);
+      Node * var = new Node(identifier_node, @1.first_line);
       var->setString($3);
 
       $$->addChild(var);
@@ -461,9 +462,9 @@ ReadPinCall:
 
 SetAnalogTail:
   integerLiteral identifier { 
-      $$ = new Node(analog_write, yylineno);
-      Node * pin = new Node(integerLiteral_node, yylineno);
-      Node * var = new Node(identifier_node, yylineno);
+      $$ = new Node(analog_write, @1.first_line);
+      Node * pin = new Node(integerLiteral_node, @1.first_line);
+      Node * var = new Node(identifier_node, @1.first_line);
       var->setString($2);
       pin->setInt($1);
 
@@ -471,9 +472,9 @@ SetAnalogTail:
       $$->addChild(var);
   }
   | identifier identifier  {
-      $$ = new Node(analog_write, yylineno);
-      Node * var = new Node(identifier_node, yylineno);
-      Node * var1 = new Node(identifier_node, yylineno);
+      $$ = new Node(analog_write, @1.first_line);
+      Node * var = new Node(identifier_node, @1.first_line);
+      Node * var1 = new Node(identifier_node, @1.first_line);
       
       var->setString($1);
       var->setString($2);
@@ -482,9 +483,9 @@ SetAnalogTail:
       $$->addChild(var1);
   }
   | identifier integerLiteral {
-      $$ = new Node(analog_write, yylineno);
-      Node * value = new Node(integerLiteral_node, yylineno);
-      Node * var = new Node(identifier_node, yylineno);
+      $$ = new Node(analog_write, @1.first_line);
+      Node * value = new Node(integerLiteral_node, @1.first_line);
+      Node * var = new Node(identifier_node, @1.first_line);
       var->setString($1);
       value->setInt($2);
 
@@ -492,9 +493,9 @@ SetAnalogTail:
       $$->addChild(value);
   }
   | integerLiteral integerLiteral {
-      $$ = new Node(analog_write, yylineno);
-      Node * pin = new Node(integerLiteral_node, yylineno);
-      Node * value = new Node(integerLiteral_node, yylineno);
+      $$ = new Node(analog_write, @1.first_line);
+      Node * pin = new Node(integerLiteral_node, @1.first_line);
+      Node * value = new Node(integerLiteral_node, @1.first_line);
       pin->setInt($1);
       value->setInt($2);
 
@@ -508,18 +509,17 @@ SetPinCall:
       $$ = $3;
  }
   | set_pin dout integerLiteral dstate {
-      $$ = new Node(digital_write, yylineno);
-      Node * pin = new Node(integerLiteral_node, yylineno);
-      pin->setInt($4);
+      $$ = new Node(digital_write, @1.first_line);
+      Node * pin = new Node(integerLiteral_node, @1.first_line);
+      pin->setInt($3);
+      $$->setInt($4);
       $$->addChild(pin);
   }
   | set_pin dout identifier dstate {
-      $$ = new Node(digital_write, yylineno);
-      Node * var = new Node(identifier_node, yylineno);
+      $$ = new Node(digital_write, @1.first_line);
+      Node * var = new Node(identifier_node, @1.first_line);
       var->setString($3);
-
       $$->setInt($4);
-      
       $$->addChild(var);
   } ;
 
@@ -527,20 +527,20 @@ SetPinCall:
 
 DelayCall:
   delay Exp {
-      $$ = new Node(delay_node, yylineno);
+      $$ = new Node(delay_node, @1.first_line);
       $$->addChild($2);
   };
 
 
 LoopCall:
   loop Exp '{' StatementList '}' {
-      $$ = new Node(loop_node, yylineno);
+      $$ = new Node(loop_node, @1.first_line);
       $$->addChild($2);
       $$->addChild($4);
   }
   | loop forever '{' StatementList '}' {
-      $$ = new Node(loop_node, yylineno);
-      Node * times = new Node(forever_node, yylineno);
+      $$ = new Node(loop_node, @1.first_line);
+      Node * times = new Node(forever_node, @1.first_line);
       $$->addChild(times);
       $$->addChild($4);
   };
@@ -551,16 +551,16 @@ Statement: error ';' {
     yyclearin;
   }
   | If '(' Exp ')' '{' StatementList '}' {
-      $$ = new Node(if_node, yylineno);
+      $$ = new Node(if_node, @1.first_line);
       $$->addChild($3);
       $$->addChild($6);
   }
   | If '(' Exp ')' '{' StatementList '}' Else '{' StatementList '}' {
-      $$ = new Node(if_node, yylineno);
+      $$ = new Node(if_node, @1.first_line);
       $$->addChild($3);
       $$->addChild($6);
 
-      Node * elsenode = new Node(else_node, yylineno);
+      Node * elsenode = new Node(else_node, @1.first_line);
       elsenode->addChild($10);
 
       $$->addChild(elsenode);
@@ -570,7 +570,7 @@ Statement: error ';' {
       $$ = $1;
   }
   | call stringLiteral ';' {
-      $$ = new Node(call_node, yylineno);
+      $$ = new Node(call_node, @1.first_line);
       $$->setString($2);
   }
   | LoopCall {
@@ -601,17 +601,17 @@ Statement: error ';' {
       $$ = $1;
   }
   | serialTx Exp ';' {
-      $$ = new Node(serial_tx, yylineno);
+      $$ = new Node(serial_tx, @1.first_line);
       $$->addChild($2);
   }
   | serialRx ';' {
-      $$ = new Node(serial_rx, yylineno);
+      $$ = new Node(serial_rx, @1.first_line);
   }
   | exit_tok ';' {
-      $$ = new Node(exit_node, yylineno);
+      $$ = new Node(exit_node, @1.first_line);
   }
   | exit_tok stringLiteral ';' {
-      $$ = new Node(exit_node, yylineno);
+      $$ = new Node(exit_node, @1.first_line);
       $$->setString($2);
   }
   | Exp plusplus ';'{
@@ -624,7 +624,7 @@ Statement: error ';' {
       }
       else
       {
-        $$ = new Node(unary_math_node, yylineno);
+        $$ = new Node(unary_math_node, @1.first_line);
         $$->setString("++");
         $$->addChild($1);
       }
@@ -640,7 +640,7 @@ Statement: error ';' {
       }
       else
       {
-        $$ = new Node(unary_math_node, yylineno);
+        $$ = new Node(unary_math_node, @1.first_line);
         $$->setString("--");
         $$->addChild($1);
       }
@@ -652,7 +652,7 @@ Statement: error ';' {
 
 void yyerror(const char * err)
 {
-  printf("\n%s on line %d", err, yylineno);
+  printf("\n%s on line %d", err, yylloc.first_line);
 }
 
 

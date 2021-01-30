@@ -9,6 +9,7 @@ GLOBAL = 69;
 routine "this is a routine test" {
   set-pin DOUT 3 HIGH;
   println "yo";
+  println GLOBAL;
   // print RESULT; // error
 
 }
@@ -17,6 +18,8 @@ routine "this is a routine test" {
 
 test "hello this is a test script" {
   Var1 = "toast";
+  GLOBAL = 42; 
+  println GLOBAL;
   // VAR = RESULT;    // invalid (RESULT isn't defined)
   // // var = 00|00|00|; // syntax error invalid (trailing |)
   // var4 = 5 + 00|00|00; // invalid (bad op)
@@ -28,15 +31,20 @@ test "hello this is a test script" {
   
 
   cars = 'this is okay too';
-
+  delay 5000;
   set-pin DOUT 0 HIGH; // ok
+
+  delay 3000;
+
   // set-pin DOUT Var1 HIGH;    // invalid (not integer for pin)
 
   // expect GT "89"; // invalid (not int for comparison)
 
   // expect GT 6 and LT 0|0|0;  // invalid (not comparing the same data type) 
   // expect GT 6 and EQ 0|0|0;  // invalid (not comparing the same data type) 
+  read-pin DIN 4;
   read-pin AIN 4;
+  exit;
   expect RETVAL EQ 5 + 6 + 90 / 32;  // ok
   
   // expect EQ 5 + 6 + 90 / 32 + Var1; // error previous call returns an int
@@ -44,14 +52,17 @@ test "hello this is a test script" {
   // prompt fudge;  // error undefined
 
   println Var1; // ok
-  println 5 + 6 + 90 / 32 + Var1; // OK (though result might be whack)
+  // println 5 + 6 + 90 / 32 + Var1; // OK (though result might be whack)
 
   var3 = 69;
+  var4 = 1;
+  print "shit ";
+  println var4 + var4 + var4 + var4 + var4 + var4 + var4 + var4 + var4 + var4 * 5 * 5 / 3;
   // loop forever {  // should be ok  
   //   print "poop";
   // }
 
-  if (var3 < 45)
+  if (1)
   {
     println "Hooray";
   }
@@ -60,8 +71,10 @@ test "hello this is a test script" {
     println "Boo";
   }
 
-  set-pin DOUT 3 HIGH;
-  delay 45;
+  set-pin DOUT 69 HIGH;
+  set-pin DOUT 69 LOW;
+  set-pin DOUT 69 HIGH;
+  delay 10000;
   read-pin DIN 4 ;  // read-x would store return result in some static variable
                     // which would then be accessible forever by EXPECT and ASSERT
 

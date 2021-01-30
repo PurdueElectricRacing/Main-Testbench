@@ -30,11 +30,6 @@ void SymbolTable::setRetval(Object * o)
 }
 
 
-void SymbolTable::setReadOnlyVar(std::string key, Object * o)
-{
-
-}
-
 
 
 /// @brief: updates the variable "key" with the new object o
@@ -99,8 +94,16 @@ void SymbolTable::setObject(std::string key, Object * o)
 }
 
 
+
+/// @brief: search the 2 scopes for the actual object itself, so we don't 
+///         accidentally delete it when freeing all our mems
 bool SymbolTable::find(Object * o)
 {
+  if (globals && globals->find(o))
+  {
+    return true;
+  }
+
   for (auto i = symbols.begin(); i != symbols.end(); i++)
   {
     if (i->second == o)

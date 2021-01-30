@@ -6,32 +6,43 @@
 #include "integer.h"
 #include "canmsg.h"
 #include "symbol-table.h"
-#include <filesystem>
+#include "gpio-interface.h"
 
+#include <filesystem>
 #include <iostream>
 #include <fstream>
-
-// Global reserved variables
-//   "SERIAL_LOG_FILE",
-//   "RETVAL", 
-//   "LOG_FILE", 
-//   "VERBOSE",  
-//   "SERIAL_DEVICE", 
-//   "GPIO_DEVICE"
-
-
-
+#include <QSerialPort>
 
 
 class Perterpreter
 {
 public:
   Node * _root = 0;
-  Perterpreter() {
+  Perterpreter(GpioDevice * gpio = 0, SerialDevice * misc = 0) {
     routines = new Routines();
     tests = new Tests();
     global_table = new SymbolTable();
     global_table->initGlobals();
+    
+    if (!gpio)
+    {
+      gpio_created = true;
+      gpio_device = new GpioDevice();
+    }
+    else
+    {
+      gpio_device = gpio;
+    }
+
+    if (!misc)
+    {
+      ser_created = true;
+      serial_device = new SerialDevice();
+    }
+    else 
+    {
+      serial_device = misc;
+    }
   }
 
   virtual ~Perterpreter() {
@@ -42,15 +53,27 @@ public:
     {
       delete _root;
     }
+    if (gpio_created)
+    {
+      delete gpio_device;
+    }
+    if (ser_created)
+    {
+      delete serial_device;
+    }
+
   }
 
   void setSerialLogFile(std::string path) {serial_log_file = path;};
   void setLogFile(std::string path) {log_file = path;};
-  void setGpioDev(std::string dev) {gpio_device = dev;};
-  void setSerialDev(std::string dev) {serial_device = dev;};
+
+  bool setGpioDev(std::string dev) { return gpio_device->setSerialDevice(dev);};
+  bool setSerialDev(std::string dev) {return serial_device->setSerialDevice(dev);};
+  void selectGpioDev(){gpio_device->selectSerialPort();};
+  bool performSyntaxAnalysis(std::filesystem::path filepath);
+
   void setVerbose(int verb) {verbose = verb;};
   void createTemplateScript(std::string spath);
-  bool performSyntaxAnalysis(std::filesystem::path filepath);
 
   void perterpret(std::string func="");
 
@@ -60,7 +83,6 @@ public:
   // TODO stream operator for writing to files and console without boost
 
 private:
-
   void perterpretVardecl(Node * node, SymbolTable * scope);
   void perterpretCall(Node * node, SymbolTable * scope);
   void perterpretDelay(Node * node, SymbolTable * scope);
@@ -90,10 +112,12 @@ private:
    
   std::string serial_log_file;
   std::string log_file;
-  std::string serial_device;
-  std::string gpio_device;
-  bool verbose = false;
+  SerialDevice *serial_device;
+  GpioDevice *gpio_device;
   Object * retval = 0;
+  bool verbose = false;
+  bool gpio_created = false;
+  bool ser_created = false;
 
 };
 
