@@ -36,14 +36,3 @@ target.path = /home/testbench/pervertt
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /home/pi/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
-
-
-include($$PWD/driver/driver.pri)
-
-
-
-unix:PKGCONFIG += libnl-3.0
-unix:PKGCONFIG += libnl-route-3.0
-
-unix:include($$PWD/driver/SocketCanDriver/SocketCanDriver.pri)
-win32:include($$PWD/driver/CandleApiDriver/CandleApiDriver.pri)
