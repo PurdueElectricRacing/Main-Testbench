@@ -2,6 +2,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <linux/can.h>
+#include <linux/sockios.h>
 #include <linux/can/error.h>
 #include <linux/can/raw.h>
 #include <string.h>
@@ -11,12 +12,13 @@
 #include <net/if.h>
 #include <unistd.h>
 #include <asm/sockios.h>
+#include <iomanip>
 
 // C++ includes
 #include <iostream>
 
 // user includes
-#include "can_interface.hpp"
+#include "can_interface.h"
 
 /// @brief: Constructor
 ///         Handles creation of CAN socket and initialization
@@ -25,27 +27,25 @@ CanInterface::CanInterface(int type, int protocol, int enable_own_messages, std:
 {
   int fd;
   struct ifreq ifr;
-  can_err_mask_t err_mask = CAN_ERR_MASK;   // default to receive every error
 
   // attempt to open the socket
   fd = socket(PF_CAN, type, protocol);
 
-  if (fd == -1)       // error opening socket
+  if (fd < 0)       // error opening socket
   {
     perror("CanInterface constructor socket call");
     throw CanSocketException;
   }
 
   strcpy(ifr.ifr_name, ifname.c_str());
+  ioctl(fd, SIOCGIFINDEX, &ifr);
 
   can_addr.can_family = AF_CAN;
   can_addr.can_ifindex = ifr.ifr_ifindex;
 
-  // enable all error messages to be received
-  setsockopt(fd, SOL_CAN_RAW, CAN_RAW_ERR_FILTER, &err_mask, sizeof(err_mask));
-  // enable or disable receipt of our messages. Default is disabled
+  // // enable or disable receipt of our messages. Default is disabled
   setsockopt(fd, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS, &enable_own_messages, 
-              sizeof(enable_own_messages));
+            sizeof(enable_own_messages));
 
   // if bind fails throw an exception
   if (bind(fd, (struct sockaddr *) &can_addr, sizeof(can_addr)) != 0)
@@ -91,31 +91,43 @@ int16_t CanInterface::writeCanData(canid_t id, uint8_t dlc, uint8_t *data)
 /// @return:
 CanFrame CanInterface::readCanData()
 {
-  struct can_frame frame;
   CanFrame frame_obj;
+  struct can_frame frame;
+  
   int32_t nbytes = 0;
+  struct timeval timeout;
+  fd_set fdset;
+
+  timeout.tv_sec = 1; // 1 second
+  timeout.tv_usec = 0;
+
+  FD_ZERO(&fdset);
+  FD_SET(can_socket_fd, &fdset);
+
+  int rv = select(can_socket_fd+1, &fdset, NULL, NULL, &timeout);
   
   // copy pasted this from the kernel documentation
-  nbytes = read(can_socket_fd, &frame, sizeof(struct can_frame));
-
-  if (nbytes < 0)
+  if (rv > 0)
   {
-    perror("can raw socket read");
-    throw CanDataException;
-  }
+    nbytes = read(can_socket_fd, &frame, sizeof(struct can_frame));
+    if (nbytes < 0)
+    {
+      perror("can raw socket read");
+      throw CanDataException;
+    }
 
-  // suppress compiler warnings grumble grumble
-  if (((uint64_t) nbytes) < sizeof(struct can_frame))
-  {
-    fprintf(stderr, "read: incomplete CAN frame\n");
-    throw CanDataException;
-  }
+    // suppress compiler warnings grumble grumble
+    if (((uint64_t) nbytes) < sizeof(struct can_frame))
+    {
+      fprintf(stderr, "read: incomplete CAN frame\n");
+      throw CanDataException;
+    }
 
-  frame_obj = frame;
+    frame_obj = frame;
+  }  
 
   // get the timestamp of the message and store it in the wrapper class.
-  // TODO figure out why SIOCGSTAMP isn't found
-  // ioctl(can_socket_fd, SIOCGSTAMP, &(frame_obj.timestamp));
+  ioctl(can_socket_fd, SIOCGSTAMP, &(frame_obj.timestamp));
 
   return frame_obj;
 }
@@ -169,12 +181,30 @@ CanFrame & CanFrame::operator=(const CanFrame &frame)
 ///         to output stream easily
 std::ostream &operator<<(std::ostream &out, const CanFrame &frame)
 {
-  out << "CAN ID: " << frame.can_id << " | Data Length: " << frame.can_dlc << "\n";
+  // don't print something that has no data
+  if (frame.can_id == 0 && frame.can_dlc == 0)
+  {
+    return out;
+  }
+
+  int val = frame.can_dlc;
+  
+  out << "CAN ID: " << "0x" << std::hex << frame.can_id
+      << " | Data Length: " << std::hex << val << "\n";
+
+  out << "[ ";
 
   for (uint8_t i = 0; i < frame.can_dlc; i++)
   {
-    out << std::string(4, ' ') << i << ": " << frame.data[i] << "\n";
+    val = frame.data[i];
+    out << std::to_string(i) << ": " << std::hex << val;
+    
+    if (i != frame.can_dlc - 1)
+    {
+      out << " | ";
+    }
   }
 
+  out << "]\n";
   return out;
 }

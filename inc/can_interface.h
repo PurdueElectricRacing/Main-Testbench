@@ -39,7 +39,7 @@ struct CanFrame
   // do nothing
   virtual ~CanFrame() {};
 
-  uint8_t can_id;
+  uint16_t can_id;
   uint8_t can_dlc;
   uint8_t padding;
   uint8_t reserve0;
@@ -72,7 +72,7 @@ public:
 
   CanInterface(int type = SOCK_RAW, int protocol = CAN_RAW, 
                int enable_own_messages = 0, std::string ifname = "can0");
-  virtual ~CanInterface() {};
+  virtual ~CanInterface() { close(can_socket_fd); };
 
   CanFrame readCanData();
   int16_t writeCanData(canid_t id, uint8_t dlc, uint8_t * data);

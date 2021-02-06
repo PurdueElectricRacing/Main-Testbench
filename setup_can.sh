@@ -1,73 +1,67 @@
 #!/bin/bash
 
-
-state='up'
 setup=1
-devname="ttyACM0"
+baud=500000
+
+echo "Usage: setup_can.sh [state (up|down)] [-b baud rate]"
+echo "       Defaults: up -b 500000"
 
 echo This script may or may not work. Who knows?
 echo
 
-if [[ $1 == "teardown" ]]; then
-  state='down'
+if [[ $1 == "down" ]]; then
   setup=0
 elif [[ $1 == "" ]]; then
-  state="up"
   setup=1
-elif [[ $1 != "" ]]; then
-  devname=$1
+  baud=500000
+elif [[ $1 == "-b" && $2 != "" ]]; then
+  if [[ $2 != "" ]]; then
+    baud=$2
+  else
+    echo "No baud rate provided for -b switch"
+    exit 1
+  fi
+elif [[ $2 == "-b" ]]; then
+ if [[ $3 != "" ]]; then
+    baud=$3
+  else
+    echo "No baud rate provided for -b switch"
+    exit 1
+  fi
 else
   echo "Unrecognized command $1"
   exit 1
 fi
 
 
-if [ "$EUID" -ne 0 ]; then
-  echo "This must be run as root, otherwise it will fail."
-  exit 1
-fi
-
-ls /dev | grep $devname > /dev/null
-
-if (( $? != 0 )); then
-  echo "$devname was not found. Please make sure the CANable is plugged in and functioning."
-  exit $?
-fi
-
 if (( $setup == 1 )); then
-  # -s is to set the speed, values are from 0 to 8, with 0 being 125k
-
-  # -s0 = 10k
-  # -s1 = 20k
-  # -s2 = 50k
-  # -s3 = 100k
-  # -s4 = 125k
-  # -s5 = 250k
-  # -s6 = 500k
-  # -s7 = 750k
-  # -s8 = 1M
-
-  slcand -o -c -s6 /dev/$devname can0
-  if (( $? != 0 )); then
-    echo Unable to init can0. Is it already setup?
-    echo "check to make sure the device name is correct using dmesg -kT"
-  fi
 
   # set the can interface up
-  ip link set can0 up
+  echo "sudo ip link set can0 up type can bitrate $baud"
+  sudo ip link set can0 up type can bitrate $baud
 
   if (( $? != 0 )); then
-    echo Unable to set can0 to state UP
+    echo Unable to set can0 to state up
+    exit 1
   fi
+
+  echo "Setup complete."
+  echo
+  echo "If the script worked the green light on the CANable should be solid and the blue light should be off."
 
 else
   echo closing can0 link
-  ip link set can0 down
+  sudo ip link set can0 down
 
   if (( $? != 0 )); then
-    echo Unable to set can0 to state DOWN
+    echo Unable to set can0 to state down
+    exit 1
   fi
+
+  echo "Teardown complete."
+  echo
+  echo "If the script worked the blue light on the CANable should be solid and the green light should be off."
 
 fi
 
-echo "Setup complete."
+
