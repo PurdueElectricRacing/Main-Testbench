@@ -5,7 +5,7 @@
 
 #include "can_exceptions.hpp"
 
-#ifdef WINDOWS
+#ifdef WIN32
 #include "candle.h"
 #endif
 
@@ -36,7 +36,7 @@ struct CanFrame
   uint8_t data[8];
   uint32_t timestamp_us;
 
-#ifdef WINDOWS
+#ifdef WIN32
   CanFrame &operator=(const candle_frame_t f);
 #else
   CanFrame &operator=(const struct can_frame &frame);

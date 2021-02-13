@@ -33,7 +33,8 @@ class WindowsCandleDev : public CanInterface
 {
 public:
   WindowsCandleDev(uint32_t baud_rate = 500000) : baud(baud_rate) {
-    
+    devlist = 0;
+    getDevices();
   };
 
   virtual ~WindowsCandleDev() { 

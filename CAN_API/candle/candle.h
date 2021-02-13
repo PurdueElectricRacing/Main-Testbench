@@ -127,37 +127,39 @@ typedef struct {
 
 #pragma pack(pop)
 
-bool candle_list_scan(candle_list_handle *list);
-bool candle_list_free(candle_list_handle list);
-bool candle_list_length(candle_list_handle list, uint8_t *len);
+#define DLL
 
-bool candle_dev_get(candle_list_handle list, uint8_t dev_num, candle_handle *hdev);
-bool candle_dev_get_state(candle_handle hdev, candle_devstate_t *state);
-wchar_t *candle_dev_get_path(candle_handle hdev);
-bool candle_dev_open(candle_handle hdev);
-bool candle_dev_get_timestamp_us(candle_handle hdev, uint32_t *timestamp_us);
-bool candle_dev_close(candle_handle hdev);
-bool candle_dev_free(candle_handle hdev);
+bool __stdcall DLL candle_list_scan(candle_list_handle *list);
+bool __stdcall DLL candle_list_free(candle_list_handle list);
+bool __stdcall DLL candle_list_length(candle_list_handle list, uint8_t *len);
 
-bool candle_channel_count(candle_handle hdev, uint8_t *num_channels);
-bool candle_channel_get_capabilities(candle_handle hdev, uint8_t ch, candle_capability_t *cap);
-bool candle_channel_set_timing(candle_handle hdev, uint8_t ch, candle_bittiming_t *data);
-bool candle_channel_set_bitrate(candle_handle hdev, uint8_t ch, uint32_t bitrate);
-bool candle_channel_start(candle_handle hdev, uint8_t ch, uint32_t flags);
-bool candle_channel_stop(candle_handle hdev, uint8_t ch);
+bool __stdcall DLL candle_dev_get(candle_list_handle list, uint8_t dev_num, candle_handle *hdev);
+bool __stdcall DLL candle_dev_get_state(candle_handle hdev, candle_devstate_t *state);
+wchar_t __stdcall DLL *candle_dev_get_path(candle_handle hdev);
+bool __stdcall DLL candle_dev_open(candle_handle hdev);
+bool __stdcall DLL candle_dev_get_timestamp_us(candle_handle hdev, uint32_t *timestamp_us);
+bool __stdcall DLL candle_dev_close(candle_handle hdev);
+bool __stdcall DLL candle_dev_free(candle_handle hdev);
 
-bool candle_frame_send(candle_handle hdev, uint8_t ch, candle_frame_t *frame);
-bool candle_frame_read(candle_handle hdev, candle_frame_t *frame, uint32_t timeout_ms);
+bool __stdcall DLL candle_channel_count(candle_handle hdev, uint8_t *num_channels);
+bool __stdcall DLL candle_channel_get_capabilities(candle_handle hdev, uint8_t ch, candle_capability_t *cap);
+bool __stdcall DLL candle_channel_set_timing(candle_handle hdev, uint8_t ch, candle_bittiming_t *data);
+bool __stdcall DLL candle_channel_set_bitrate(candle_handle hdev, uint8_t ch, uint32_t bitrate);
+bool __stdcall DLL candle_channel_start(candle_handle hdev, uint8_t ch, uint32_t flags);
+bool __stdcall DLL candle_channel_stop(candle_handle hdev, uint8_t ch);
 
-candle_frametype_t candle_frame_type(candle_frame_t *frame);
-uint32_t candle_frame_id(candle_frame_t *frame);
-bool candle_frame_is_extended_id(candle_frame_t *frame);
-bool candle_frame_is_rtr(candle_frame_t *frame);
-uint8_t candle_frame_dlc(candle_frame_t *frame);
-uint8_t *candle_frame_data(candle_frame_t *frame);
-uint32_t candle_frame_timestamp_us(candle_frame_t *frame);
+bool __stdcall DLL candle_frame_send(candle_handle hdev, uint8_t ch, candle_frame_t *frame);
+bool __stdcall DLL candle_frame_read(candle_handle hdev, candle_frame_t *frame, uint32_t timeout_ms);
 
-candle_err_t candle_dev_last_error(candle_handle hdev);
+candle_frametype_t __stdcall DLL candle_frame_type(candle_frame_t *frame);
+uint32_t __stdcall DLL candle_frame_id(candle_frame_t *frame);
+bool __stdcall DLL candle_frame_is_extended_id(candle_frame_t *frame);
+bool __stdcall DLL candle_frame_is_rtr(candle_frame_t *frame);
+uint8_t __stdcall DLL candle_frame_dlc(candle_frame_t *frame);
+uint8_t __stdcall DLL *candle_frame_data(candle_frame_t *frame);
+uint32_t __stdcall DLL candle_frame_timestamp_us(candle_frame_t *frame);
+
+candle_err_t __stdcall DLL candle_dev_last_error(candle_handle hdev);
 
 #ifdef __cplusplus
 }

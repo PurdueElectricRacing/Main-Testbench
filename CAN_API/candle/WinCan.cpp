@@ -3,29 +3,35 @@
 
 
 /// @brief: fetch a list of all connected candlelight devices. 
+/// @throw: CanWindowsDeviceListException if there was an error getting the devs
 std::vector<std::string> WindowsCandleDev::getDevices()
 {
   uint8_t num_devices = 0;
   candle_handle handle;
   std::vector<std::string> ret;
-  // TODO throw exceptions 
+
+  // if there's already a list, free it and rebuild it
+  if (devlist != 0)
+  {
+    candle_list_free(devlist);
+    devlist = 0;
+  }
 
   if (!candle_list_scan(&devlist))
   {
-    // TODO throw exception because of an error in device scanning
     candle_list_free(devlist);
-    return ret;
+    devlist = 0;
+    throw CanWindowsDeviceListException;
   }
 
   candle_list_length(devlist, &num_devices);
   if (num_devices == 0)
   {
     candle_list_free(devlist);
+    devlist = 0;
     return ret;
   }
 
-  // TODO have these be optional debug statements
-  printf("detected %d candle device(s):\n", num_devices);
   for (unsigned i = 0; i < num_devices; i++)
   {
     if (candle_dev_get(devlist, i, &handle))
@@ -39,7 +45,8 @@ std::vector<std::string> WindowsCandleDev::getDevices()
     }
     else
     {
-      printf("error getting info for device %d\n", i);
+      std::cerr << "error getting info for device " << i << "\n";
+      throw CanWindowsGetDeviceException;
     }
   }
 
@@ -56,9 +63,15 @@ std::vector<std::string> WindowsCandleDev::getDevices()
 /// @throws: CanWindowsGetDeviceException if there was an error getting the dev
 /// @throws: CanWindowsOpenException if error opening device
 /// @throws: CanWindowsOpenException
+/// @throws: CanWindowsDeviceListException if the device list is null
 /// @return: TODO
 void WindowsCandleDev::Open(uint8_t dev_idx, uint32_t rate)
 {
+  // die if empty device list
+  if (devlist == 0)
+  {
+    throw CanWindowsDeviceListException;
+  }
 
   // unable to access the device
   if (!candle_dev_get(devlist, dev_idx, &hdev))
@@ -73,16 +86,8 @@ void WindowsCandleDev::Open(uint8_t dev_idx, uint32_t rate)
   }
 
 
-  // attempt to set the baud rate to rate
-  try 
-  {
-    setBaudRate(rate);
-  }
-  catch (std::exception &e)
-  {
-    std::cerr << e.what();
-    return;
-  }
+  // attempt to set the baud 
+  setBaudRate(rate);
 
   // actually start the channel
   if (!candle_channel_start(hdev, 0, 0))
@@ -124,7 +129,6 @@ void WindowsCandleDev::setBaudRate(uint32_t rate)
   if (state == CANDLE_DEVSTATE_INUSE)
   {
     printf("device in use\n");
-    // TODO print(?) that the device is in use
   }
   else if (state == CANDLE_DEVSTATE_AVAIL)
   {
@@ -148,20 +152,12 @@ CanFrame WindowsCandleDev::readCanData()
   CanFrame ret;
   
   // read from the device
-  if (candle_frame_read(hdev, &frame, 1000))
+  if (candle_frame_read(hdev, &frame, 500))
   {
     // make sure there wasn't an error when reading
     if (candle_frame_type(&frame) == CANDLE_FRAMETYPE_RECEIVE)
     {
-      uint8_t dlc = candle_frame_dlc(&frame);
-      uint8_t *data = candle_frame_data(&frame);
-
-      printf("ID 0x%08x [%d]", candle_frame_id(&frame), dlc);
-      for (int i = 0; i < dlc; i++)
-      {
-        printf(" %02X", data[i]);
-      }
-      printf("\n");
+      ret = frame;
     }
   }
   // handle errors
@@ -169,11 +165,9 @@ CanFrame WindowsCandleDev::readCanData()
   {
     if (candle_dev_last_error(hdev) == CANDLE_ERR_READ_TIMEOUT)
     {
-      printf("timeout occurred\n");
+      printf("\ntimeout occurred\n");
     }
   }
-
-  ret = frame;
 
   return ret;
 }

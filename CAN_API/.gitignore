@@ -4,5 +4,7 @@ cmake_install*
 can_example
 x64
 Debug
-can_example*
+can_examples
 .vs
+build*
+bin

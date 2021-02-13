@@ -1,7 +1,7 @@
 #include "canframe.h"
 #include <cstring>
 
-#ifndef WINDOWS
+#ifndef WIN32
 #include <socketcan_if.h>
 #endif
 
@@ -19,7 +19,7 @@ CanFrame::CanFrame(const CanFrame &frame)
 }
 
 
-#ifdef WINDOWS
+#ifdef WIN32
 /// @brief: assignment operator overload for wrapping struct can_frame
 ///         does not get a timestamp.
 CanFrame& CanFrame::operator=(const candle_frame_t f)
@@ -48,7 +48,7 @@ CanFrame& CanFrame::operator=(const struct can_frame &frame)
 
   return *this;
 }
-#endif;
+#endif
 
 /// @brief: assignment operator for copying one CanFrame object to another.
 CanFrame & CanFrame::operator=(const CanFrame &frame)
@@ -70,7 +70,7 @@ CanFrame & CanFrame::operator=(const CanFrame &frame)
 std::ostream &operator<<(std::ostream &out, const CanFrame &frame)
 {
   // don't print something that has no data
-  if (frame.can_id == 0 && frame.can_dlc == 0)
+  if (frame.can_id == 0)
   {
     return out;
   }
@@ -93,6 +93,6 @@ std::ostream &operator<<(std::ostream &out, const CanFrame &frame)
     }
   }
 
-  out << "]\n";
+  out << " ]\n";
   return out;
 }

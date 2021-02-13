@@ -6,4 +6,3 @@ HEADERS += inc/can_interface.h \
   inc/canframe.h \ 
   inc/socketcan_if.h \
 
-win32: DEFINES += WINDOWS

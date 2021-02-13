@@ -71,4 +71,13 @@ class CanWindowsGetDeviceException : public std::exception
 
 
 
+class CanWindowsDeviceListException : public std::exception
+{
+  virtual const char *what() const throw()
+  {
+    return "An error occurred while attempting find the attached CAN devs.\n";
+  }
+} static CanWindowsDeviceListException;
+
+
 #endif

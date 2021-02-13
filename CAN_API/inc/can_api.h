@@ -4,7 +4,7 @@
 #include "can_interface.h"
 #include "can_parsing.h"
 
-#ifdef WINDOWS
+#ifdef WIN32 
 #include "candle.h"
 #include "WinCan.h"
 #else
@@ -19,7 +19,7 @@
 ///         so the low level code can be completely ignorant of the underlying
 ///         hardware. 
 static CanInterface * NewCanDevice(int baud_rate=500000) {
-#ifdef WINDOWS
+#ifdef WIN32
   return new WindowsCandleDev(baud_rate);
 #else
   return new SocketCanDevice();

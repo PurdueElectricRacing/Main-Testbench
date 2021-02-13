@@ -9,6 +9,7 @@
 int main() 
 {
 
+  // for windows you can specify the baudrate to the NewCanDevice function
   CanInterface * device = NewCanDevice();
   device->Open();
 
@@ -27,4 +28,10 @@ int main()
       std::cerr << "Error writing to CAN bus.\n";
     }
   }
+
+
+  // it won't ever actually get bere because PER is never not GREAT,
+  // but this is to demonstrate how to use it
+  device->Close();
+  delete device;
 }
