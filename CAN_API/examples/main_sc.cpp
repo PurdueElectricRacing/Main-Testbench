@@ -19,7 +19,9 @@ int main()
     std::cout << frame;
 
     uint8_t data = 69;
-    device->writeCanData(0x420, 1, &data);
+    if (device->writeCanData(0x420, 1, &data) < 0)
+    {
+      std::cerr << "Error writing to CAN bus.\n";
+    }  
   }
-
 }

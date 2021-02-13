@@ -5,6 +5,10 @@
 
 #include "can_exceptions.hpp"
 
+#ifdef WINDOWS
+#include "candle.h"
+#endif
+
 // wrapper for the struct can_frame to allow for the = operator to be
 // used for assignment
 struct CanFrame
@@ -16,6 +20,7 @@ struct CanFrame
     padding = 0;
     reserve0 = 0;
     reserve1 = 0;
+    timestamp_us = 0;
   };
 
   CanFrame(const CanFrame & frame);
@@ -29,9 +34,11 @@ struct CanFrame
   uint8_t reserve0;
   uint8_t reserve1;
   uint8_t data[8];
-  struct timeval timestamp;
+  uint32_t timestamp_us;
 
-#ifndef WiNDOWS
+#ifdef WINDOWS
+  CanFrame &operator=(const candle_frame_t f);
+#else
   CanFrame &operator=(const struct can_frame &frame);
 #endif
   CanFrame &operator=(const CanFrame &frame);

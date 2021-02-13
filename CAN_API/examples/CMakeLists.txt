@@ -7,11 +7,20 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 add_definitions(-DUNICODE)
 
 if (WIN32)
+  add_definitions(-DWINDOWS)
   include_directories("../candle")
 
-  add_executable(can_example main_win.cpp "../src/canframe.cpp" )  # TODO add candle stuff here
-  target_link_libraries(test
-	  SetupApi
+  add_executable( can_example main_win.cpp 
+    "../src/canframe.cpp" 
+    "../candle/candle_ctrl_req.c"
+    "../candle/candle.c"
+    "../candle/gs_usb.c"
+    "../candle/gsusb.c"
+    "../candle/WinCan.cpp"
+  ) 
+  
+  target_link_libraries( can_example
+    SetupApi
 	  winusb
 	  Ole32
   )

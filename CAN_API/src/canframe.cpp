@@ -14,12 +14,26 @@ CanFrame::CanFrame(const CanFrame &frame)
   padding = frame.padding;
   reserve0 = frame.reserve0;
   reserve1 = frame.reserve1;
-  timestamp = frame.timestamp;
+  timestamp_us = frame.timestamp_us;
   memcpy(data, frame.data, 8);
 }
 
 
-#ifndef WINDOWS
+#ifdef WINDOWS
+/// @brief: assignment operator overload for wrapping struct can_frame
+///         does not get a timestamp.
+CanFrame& CanFrame::operator=(const candle_frame_t f)
+{
+  can_id  = f.can_id;
+  can_dlc = f.can_dlc;
+  reserve0 = f.reserved;
+  timestamp_us = f.timestamp_us;
+  memcpy(data, f.data, 8);
+
+  return *this;
+}
+
+#else
 /// @brief: assignment operator overload for wrapping struct can_frame
 ///         does not get a timestamp.
 CanFrame& CanFrame::operator=(const struct can_frame &frame)
@@ -29,6 +43,7 @@ CanFrame& CanFrame::operator=(const struct can_frame &frame)
   padding = frame.__pad;
   reserve0 = frame.__res0;
   reserve1 = frame.__res1;
+  timestamp_us = frame.tv_usec;
   memcpy(data, frame.data, 8);
 
   return *this;
@@ -43,7 +58,7 @@ CanFrame & CanFrame::operator=(const CanFrame &frame)
   padding = frame.padding;
   reserve0 = frame.reserve0;
   reserve1 = frame.reserve1;
-  timestamp = frame.timestamp;
+  timestamp_us = frame.timestamp_us;
   memcpy(data, frame.data, 8);
 
   return *this;

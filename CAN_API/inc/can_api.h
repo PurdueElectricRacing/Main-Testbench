@@ -5,7 +5,8 @@
 #include "can_parsing.h"
 
 #ifdef WINDOWS
-
+#include "candle.h"
+#include "WinCan.h"
 #else
 #include "socketcan_if.h"
 #endif
