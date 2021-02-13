@@ -157,8 +157,10 @@ CanFrame SocketCanDevice::readCanData()
   }  
 
   errno = 0;
+  struct timeval t;
   // get the timestamp of the message and store it in the wrapper class.
-  ioctl(can_socket_fd, SIOCGSTAMP, &(frame_obj.timestamp));
+  ioctl(can_socket_fd, SIOCGSTAMP, &(t));
+  frame_obj.timestamp_us = t.tv_usec;
 
   return frame_obj;
 }

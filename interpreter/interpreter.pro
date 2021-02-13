@@ -38,6 +38,8 @@ win32 {
 }
 
 
+
+
 MOC_DIR = $$PWD/moc
 TARGET = /perterpreter
 
@@ -62,6 +64,7 @@ HEADERS = \
    $$PWD/src/lexer.l \
    $$PWD/src/parser.y \
    $$PWD/inc/serial-device.h \
+   $$PWD/inc/perterpreter_exceptions.h \
 
 
 SOURCES = \
@@ -77,6 +80,8 @@ SOURCES = \
 
 INCLUDEPATH = \
     $$PWD/inc
+
+include($$PWD/../CAN_API/canapi.pri)
 
 #DEFINES = 
 

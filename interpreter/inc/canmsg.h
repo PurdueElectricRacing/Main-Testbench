@@ -114,6 +114,9 @@ public:
     return -1;
   };
 
+  uint8_t * Data() { return data; };
+  uint8_t Len() { return len; };
+
 private:
   uint8_t data[8];
   uint8_t len;

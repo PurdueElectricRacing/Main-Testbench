@@ -43,7 +43,6 @@ CanFrame& CanFrame::operator=(const struct can_frame &frame)
   padding = frame.__pad;
   reserve0 = frame.__res0;
   reserve1 = frame.__res1;
-  timestamp_us = frame.tv_usec;
   memcpy(data, frame.data, 8);
 
   return *this;

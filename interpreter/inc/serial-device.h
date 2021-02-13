@@ -145,7 +145,7 @@ public:
     
     if (ports.size() == 0)
     {
-      std::cout << "No serial devices detected. \n";
+      std::cerr << "selectSerialPort: No serial devices detected. \n";
       return QSerialPortInfo();
     }
 
@@ -224,7 +224,9 @@ public:
               <<  device.errorString().toStdString() << "\n";
     device.clearError();
     return QString("-1");
-  }
+  };
+
+  bool isOpen() { return device.isOpen(); };
 
 protected:
   QSerialPort device;

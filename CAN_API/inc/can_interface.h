@@ -44,6 +44,7 @@ public:
   // this defeats the purpose of the whole inheritance thing...
   virtual void Open(uint8_t dev_idex=0, uint32_t baud_rate=500000) = 0;
   virtual void Close() = 0;
+  
 };
 
 #endif

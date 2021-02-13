@@ -8,6 +8,9 @@
 #include "operators.h"
 #include "object-factory.h"
 #include "serial-device.h"
+#include "perterpreter_exceptions.h"
+
+#include "can_api.h"
 
 #include <exception>
 #include <iostream>
@@ -595,21 +598,38 @@ void Perterpreter::perterpret(std::string func)
 
 
 
-
+/// @brief: write some message to a connected generic serial device. 
+/// @throws: SerialDeviceNotConnected if no device is connected
 void Perterpreter::perterpretSerialTx(Node * node, SymbolTable * scope)
 {
-  String * val = static_cast<String *>(getObject(node->children[0], scope));
-  QString cmd = val->value.c_str();
-  serial_device->sendCommand(cmd);
+  if (serial_device->isOpen())
+  {
+    String * val = static_cast<String *>(getObject(node->children[0], scope));
+    QString cmd = val->value.c_str();
+    serial_device->sendCommand(cmd);
+  }
+  else
+  {
+    throw SerialDeviceNotConnected;
+  }
 }
 
 
 
 
+/// @brief: Read from a connected generic serial device. 
+/// @throws: SerialDeviceNotConnected if no device is connected
 void Perterpreter::perterpretSerialRx(Node * node, SymbolTable * scope)
 {
-
-  // TODO generic read from serial here (NO COMMAND SPECIFIED TO FUNC)
+  if (serial_device->isOpen())
+  {
+    scope->setObject("RETVAL", 
+                     new String(serial_device->serialRead().toStdString()));
+  }
+  else
+  {
+    throw SerialDeviceNotConnected;
+  }
 }
 
 
@@ -618,12 +638,20 @@ void Perterpreter::perterpretSerialRx(Node * node, SymbolTable * scope)
 /// @brief: Perform the operation for writing a digital pin to the state 
 ///         specified in the script. Sends a serial command to an arduino 
 ///         controller
+/// @throws: GPIODeviceNotConnected if no gpio device is connected
 void Perterpreter::perterpretDWrite(Node * node, SymbolTable * scope)
 {
-  Node * pin_node = node->children[0];
-  Integer * pin = static_cast<Integer*>(getObject(pin_node, scope));
-  int state = node->data.intval;
-  gpio_device->digitalWrite(pin->value, state);
+  if (gpio_device->isOpen())
+  {
+    Node * pin_node = node->children[0];
+    Integer * pin = static_cast<Integer*>(getObject(pin_node, scope));
+    int state = node->data.intval;
+    gpio_device->digitalWrite(pin->value, state);
+  }
+  else
+  {
+    throw GPIODeviceNotConnected;
+  }
 }
 
 
@@ -631,13 +659,21 @@ void Perterpreter::perterpretDWrite(Node * node, SymbolTable * scope)
 /// @brief: Perform the operation for writing a DAC pin to the state 
 ///         specified in the script. Sends a serial command to an arduino 
 ///         controller
+/// @throws: GPIODeviceNotConnected if no gpio device is connected
 void Perterpreter::perterpretAwrite(Node * node, SymbolTable * scope)
 {
-  Node * pin_node = node->children[0];
-  Node * val_node = node->children[1];
-  Integer * pin = static_cast<Integer*>(getObject(pin_node, scope));
-  Integer * value = static_cast<Integer *>(getObject(val_node, scope));
-  gpio_device->analogWrite(pin->value, value->value);
+  if (gpio_device->isOpen())
+  {
+    Node * pin_node = node->children[0];
+    Node * val_node = node->children[1];
+    Integer * pin = static_cast<Integer*>(getObject(pin_node, scope));
+    Integer * value = static_cast<Integer *>(getObject(val_node, scope));
+    gpio_device->analogWrite(pin->value, value->value);
+  }
+  else
+  {
+    throw GPIODeviceNotConnected;
+  }
 }
 
 
@@ -645,12 +681,20 @@ void Perterpreter::perterpretAwrite(Node * node, SymbolTable * scope)
 /// @brief: Perform the operation for reading a digital pin's state 
 ///         specified in the script. Sends a serial command to an arduino 
 ///         controller
+/// @throws: GPIODeviceNotConnected if no gpio device is connected
 void Perterpreter::perterpretDRead(Node * node, SymbolTable * scope)
 {
-  Node * pin_node = node->children[0];
-  Integer * pin = static_cast<Integer*>(getObject(pin_node, scope));
-  Integer * value = new Integer(gpio_device->digitalRead(pin->value));
-  scope->setRetval(value);
+  if (gpio_device->isOpen())
+  {
+    Node * pin_node = node->children[0];
+    Integer * pin = static_cast<Integer*>(getObject(pin_node, scope));
+    Integer * value = new Integer(gpio_device->digitalRead(pin->value));
+    scope->setRetval(value);
+  }
+  else
+  {
+    throw GPIODeviceNotConnected;
+  }
 }
 
 
@@ -659,14 +703,21 @@ void Perterpreter::perterpretDRead(Node * node, SymbolTable * scope)
 /// @brief: Perform the operation for reading an analog pin's state 
 ///         specified in the script. Sends a serial command to an arduino 
 ///         controller
+/// @throws: GPIODeviceNotConnected if no gpio device is connected
 void Perterpreter::perterpretAread(Node * node, SymbolTable * scope)
 {
-  Node * pin_node = node->children[0];
-  Integer * pin = static_cast<Integer*>(getObject(pin_node, scope));
-  Integer * value = new Integer(gpio_device->analogRead(pin->value));
-  scope->setRetval(value);
+  if (gpio_device->isOpen())
+  {
+    Node * pin_node = node->children[0];
+    Integer * pin = static_cast<Integer*>(getObject(pin_node, scope));
+    Integer * value = new Integer(gpio_device->analogRead(pin->value));
+    scope->setRetval(value);
+  }
+  else
+  {
+    throw GPIODeviceNotConnected;
+  }
 }
-
 
 
 
@@ -676,7 +727,9 @@ void Perterpreter::perterpretSendMsg(Node * node, SymbolTable * scope)
   Node * addrnode = node->children[0];
   Node * msgnode = node->children[1];
   Integer * address = static_cast<Integer *>(getObject(addrnode, scope));
-  // TODO broadcast CAN message
+  CAN_Msg * msg = static_cast<CAN_Msg *>(getObject(msgnode, scope));
+
+  can_if->writeCanData(address->value, msg->Len(), msg->Data());
 }
 
 
@@ -686,25 +739,45 @@ void Perterpreter::perterpretReadMsg(Node * node, SymbolTable * scope)
 {
   Node * addrnode = node->children[0];
   Integer * address = static_cast<Integer *>(getObject(addrnode, scope));
+  // TODO figure out how to read a specific address
+  // have a 
 }
 
 
 
 
+void Perterpreter::selectGpioDev()
+{ 
+  if (gpio_device->selectSerialPort().isNull())
+  {
+    throw NoGPIODevicesFound;
+  }
+};
+
+
+
+#define STANDALONE
 // =============================================================================
 #ifdef STANDALONE
 int main (int argc, char ** argv)
 {
   using namespace cxxopts;
   QCoreApplication app(argc, argv);
-
+  CanInterface * candev = 0;
   Perterpreter p;
   
   std::string infile, device, io, logfile, toutfile, sdest;
   std::vector<std::string> routines_to_run, tests_to_run;
+  std::set<int> baud_rates = {
+    125000,
+    250000,
+    500000,
+    1000000
+  };
 
   bool verbose = false, syntax_check = false;
   bool good_syntax = false;
+  int baud = 500000;
 try
 {
   Options options("perterpreter", "Interpreter for the PER automated" 
@@ -765,6 +838,10 @@ try
                         "not run any. See -T for examples, as the syntax is "
                         "the same. The order specified will be the order scripts are run in", 
                         value<std::vector<std::string> >(routines_to_run))
+    ("b,baud", "the baud rate to use for the CAN device (only makes an impact"
+               " on windows. If on Linux, use the `setup_can.sh` script)",
+               value<int>(baud))
+    
     ;
   
   options.parse_positional({"infile"});
@@ -814,6 +891,16 @@ try
     exit(-1);
   }
 
+
+  if (baud_rates.find(baud) == baud_rates.end())
+  {
+    std::cerr << "Invalid baud rate " << baud << "\n";
+    exit(-1);
+  }
+
+
+ 
+
   // this is a global variable that the error printer uses.
   good_syntax = p.performSyntaxAnalysis(infile);
   
@@ -835,7 +922,7 @@ try
   else
   {
     std::cerr << "No serial device selected. Any calls to serial-tx or "
-                 "serial-rx will print an error message.\n";
+                 "serial-rx will throw an exception.\n";
   }
 
   if (!io.empty())
@@ -848,6 +935,11 @@ try
     p.selectGpioDev();
   }
 
+  candev = NewCanDevice(baud);
+  candev->Open();
+
+  p.setCanInterface(candev);
+
   if (!logfile.empty())
   {
     p.setLogFile(logfile);
@@ -857,6 +949,7 @@ try
   {
 
   }
+
   p.perterpret();
 }
 catch (std::exception& e)

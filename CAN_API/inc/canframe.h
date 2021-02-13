@@ -35,6 +35,7 @@ struct CanFrame
   uint8_t reserve1;
   uint8_t data[8];
   uint32_t timestamp_us;
+  
 
 #ifdef WIN32
   CanFrame &operator=(const candle_frame_t f);

@@ -180,17 +180,18 @@ else
  
 - interpreter will have the following command structure:
   perterpret <scriptname.pers> [(-V, --validate} | (-rt, --run-tests testlist) | (-rr, --run-routines routinelist)]| <-g dest> [-dev device] [-io device] [-v] [-l logfile]
-    -dev: generic serial device which serial-rx and serial-tx will send / receive from
-    -io: the device to be used as the IO platform (e.g. COM3, /dev/tty4, etc)
-    -v --verbose: enables verbose printing. If enabled, all script commands
+    - `-dev`: generic serial device which serial-rx and serial-tx will send / receive from
+    - `-io`: the device to be used as the IO platform (e.g. COM3, /dev/tty4, etc)
+    - `-v --verbose`: enables verbose printing. If enabled, all script commands
                   supporting verbose printing will print to stdout
-    -l --log filename: specifies the file to log to. defaults to stdout
-    -t, --test-output filename: filename of where to put the test output
-    -g, --generate-sample dest: generate a sample script and put in in the supplied path. Users can specify the file name by specifying a whole (existing) path and appending the file's name to the path
-    -V, --validate: if this switch is passed, the interpreter will not execute. It will instead only perform syntax parsing and type checking. This is useful for checking scripts before actually running them if you don't want to run them.
-    -T, --run-tests <test list ...>: this is a list of tests to run if you don't want to run all of them
-    -R, --run-routines: This is a list of routines to run if you want to run any of them. Default behavior is to not run any.
+    - `-l --log filename`: specifies the file to log to. defaults to stdout
+    - `-t, --test-output filename`: filename of where to put the test output
+    - `-g, --generate-sample dest`: generate a sample script and put in in the supplied path. Users can specify the file name by specifying a whole (existing) path and appending the file's name to the path
+    - `-V, --validate`: if this switch is passed, the interpreter will not execute. It will instead only perform syntax parsing and type checking. This is useful for checking scripts before actually running them if you don't want to run them.
+    - `-T, --run-tests <test list ...>`: this is a list of tests to run if you don't want to run all of them
+    - `-R, --run-routines`: This is a list of routines to run if you want to run any of them. Default behavior is to not run any.
       - For -R and -T, the order specified will be the order scripts are run in
+    - `-b --baud`: the baud rate to use for the CAN device (only makes an impact on windows. If on Linux, use the `setup_can.sh` script). Defaults to 500kB
 
 
 

@@ -7,6 +7,7 @@
 #include "canmsg.h"
 #include "symbol-table.h"
 #include "gpio-interface.h"
+#include "can_api.h"
 
 #include <filesystem>
 #include <iostream>
@@ -61,7 +62,10 @@ public:
     {
       delete serial_device;
     }
-
+    if (can_created)
+    {
+      delete can_if;
+    }
   }
 
   void setSerialLogFile(std::string path) {serial_log_file = path;};
@@ -69,7 +73,8 @@ public:
 
   bool setGpioDev(std::string dev) { return gpio_device->setSerialDevice(dev);};
   bool setSerialDev(std::string dev) {return serial_device->setSerialDevice(dev);};
-  void selectGpioDev(){gpio_device->selectSerialPort();};
+  void setCanInterface(CanInterface * itf) { can_if = itf; };
+  void selectGpioDev();
   bool performSyntaxAnalysis(std::filesystem::path filepath);
 
   void setVerbose(int verb) {verbose = verb;};
@@ -114,10 +119,12 @@ private:
   std::string log_file;
   SerialDevice *serial_device;
   GpioDevice *gpio_device;
+  CanInterface *can_if;
   Object * retval = 0;
   bool verbose = false;
   bool gpio_created = false;
   bool ser_created = false;
+  bool can_created = false;
 
 };
 
