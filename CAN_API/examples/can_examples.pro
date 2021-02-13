@@ -46,7 +46,6 @@ win32:HEADERS += \
     ../candle/WinCan.h \
     ../inc/canframe.h \
     ../inc/can_api.h
-    ../inc/
 
 
 win32:INCLUDEPATH += ../candle
