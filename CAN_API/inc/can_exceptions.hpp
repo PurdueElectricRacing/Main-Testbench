@@ -10,7 +10,7 @@ class CanSocketException : public std::exception
 {
   virtual const char *what() const throw()
   {
-    return "An error occurred while opening a CAN socket.\n";
+    return "An error occurred while opening/connecting to a CAN socket.\n";
   }
 } static CanSocketException;
 
@@ -21,6 +21,7 @@ class CanDataException : public std::exception
     return "An error occurred while attempting to read / write from CAN device.\n";
   }
 } static CanDataException;
+
 
 
 #endif

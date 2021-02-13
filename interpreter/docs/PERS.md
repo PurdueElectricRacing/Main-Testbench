@@ -263,3 +263,13 @@ Arduino Serial communication protocol
   * `PIN`: up to DAC_MAX
   * `PIN`: up to GPIO_MA
 
+
+Compiling
+===
+
+### Building on Windows
+1. Install Qt Creator open source (Make sure to install Qt 5.15, not Qt 6. This code is untested on Qt 6 since it was only release a few months prior to the rollout of this system.)
+2. Add `C:\Qt\Tools\mingw810_64\bin` to your path
+3. Add `C:\Qt\5.15.2\mingw81_64\bin` to your path
+4. Open the project in QtCreator and click on the hammer button to build it.
+

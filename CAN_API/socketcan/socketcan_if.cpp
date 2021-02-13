@@ -13,50 +13,71 @@
 #include <unistd.h>
 #include <asm/sockios.h>
 #include <iomanip>
+#include <errno.h>
 
 // C++ includes
 #include <iostream>
 
 // user includes
-#include "can_interface.h"
+#include "socketcan_if.h"
 
 /// @brief: Constructor
 ///         Handles creation of CAN socket and initialization
 ///         of necessary data.
-CanInterface::CanInterface(int type, int protocol, int enable_own_messages, std::string ifname)
+SocketCanDevice::SocketCanDevice(int type, int protocol, int enable_own_messages, std::string ifname)
 {
   int fd;
   struct ifreq ifr;
 
   // attempt to open the socket
+  errno = 0;
   fd = socket(PF_CAN, type, protocol);
 
   if (fd < 0)       // error opening socket
   {
-    perror("CanInterface constructor socket call");
+    perror("SocketCanDevice constructor socket call");
     throw CanSocketException;
   }
 
   strcpy(ifr.ifr_name, ifname.c_str());
-  ioctl(fd, SIOCGIFINDEX, &ifr);
+
+  errno = 0;
+  if (ioctl(fd, SIOCGIFINDEX, &ifr) == -1)
+  {
+    perror("SocketCanDevice: ioctl");
+    throw CanSocketException;
+  }
 
   can_addr.can_family = AF_CAN;
   can_addr.can_ifindex = ifr.ifr_ifindex;
 
-  // // enable or disable receipt of our messages. Default is disabled
+  errno = 0;
+  // enable or disable receipt of our messages. Default is disabled
   setsockopt(fd, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS, &enable_own_messages, 
             sizeof(enable_own_messages));
-
-  // if bind fails throw an exception
-  if (bind(fd, (struct sockaddr *) &can_addr, sizeof(can_addr)) != 0)
-  {
-    perror("CanInterface constructor bind call");
-    throw CanSocketException;
-  }
 
   can_socket_fd = fd;
   if_name = ifname;
 }
+
+
+
+
+/// @brief: attempt to open the device. we don't care about the args
+///         they're just used on winders
+/// @throws: CanSocketException if there was a binding failure
+void SocketCanDevice::Open(uint8_t, uint32_t)
+{
+  errno = 0;
+  // if bind fails throw an exception
+  if (bind(can_socket_fd, (struct sockaddr *) &can_addr, sizeof(can_addr)) != 0)
+  {
+    perror("SocketCanDevice constructor bind call");
+    throw CanSocketException;
+  }
+}
+
+
 
 /// @brief: send data to the address specified by id
 ///
@@ -64,7 +85,7 @@ CanInterface::CanInterface(int type, int protocol, int enable_own_messages, std:
 ///        for info on the socketCAN api
 ///
 /// @return: number of bytes written, or -1 on error
-int16_t CanInterface::writeCanData(canid_t id, uint8_t dlc, uint8_t *data)
+int16_t SocketCanDevice::writeCanData(uint16_t id, uint8_t dlc, uint8_t *data)
 {
   can_frame frame;
   int16_t bytes = 0;
@@ -73,13 +94,13 @@ int16_t CanInterface::writeCanData(canid_t id, uint8_t dlc, uint8_t *data)
   frame.can_id = id;
   memcpy(frame.data, data, dlc);
 
+  errno = 0;
   bytes = sendto(can_socket_fd, &frame, sizeof(struct can_frame), 0, 
                  (struct sockaddr *) &can_addr, sizeof(can_addr));
 
   if (bytes == -1)
   {
     perror("writeCanData: sendto");
-    return 0;
   }
 
   return bytes;
@@ -89,7 +110,7 @@ int16_t CanInterface::writeCanData(canid_t id, uint8_t dlc, uint8_t *data)
 /// @brief: reads whatever is in the CAN buffer and returns a CanFrame object
 ///
 /// @return:
-CanFrame CanInterface::readCanData()
+CanFrame SocketCanDevice::readCanData()
 {
   CanFrame frame_obj;
   struct can_frame frame;
@@ -104,28 +125,38 @@ CanFrame CanInterface::readCanData()
   FD_ZERO(&fdset);
   FD_SET(can_socket_fd, &fdset);
 
+  errno = 0;
   int rv = select(can_socket_fd+1, &fdset, NULL, NULL, &timeout);
   
   // copy pasted this from the kernel documentation
   if (rv > 0)
   {
+    errno = 0;
     nbytes = read(can_socket_fd, &frame, sizeof(struct can_frame));
     if (nbytes < 0)
     {
-      perror("can raw socket read");
+      perror("SocketCanDevice::readCanData:can raw socket read");
       throw CanDataException;
     }
 
     // suppress compiler warnings grumble grumble
     if (((uint64_t) nbytes) < sizeof(struct can_frame))
     {
-      fprintf(stderr, "read: incomplete CAN frame\n");
+      fprintf(stderr, "SocketCanDevice::readCanData:read: incomplete CAN frame\n");
       throw CanDataException;
     }
 
     frame_obj = frame;
+  }
+  else
+  {
+    if (timeout.tv_sec == 1)
+    {
+      std::cerr << "A read timeout occurred.\n\n";
+    }
   }  
 
+  errno = 0;
   // get the timestamp of the message and store it in the wrapper class.
   ioctl(can_socket_fd, SIOCGSTAMP, &(frame_obj.timestamp));
 
@@ -133,78 +164,3 @@ CanFrame CanInterface::readCanData()
 }
 
 
-
-/// @brief: Copy constructor
-CanFrame::CanFrame(const CanFrame &frame)
-{
-  can_id = frame.can_id;
-  can_dlc = frame.can_dlc;
-  padding = frame.padding;
-  reserve0 = frame.reserve0;
-  reserve1 = frame.reserve1;
-  timestamp = frame.timestamp;
-  memcpy(data, frame.data, 8);
-}
-
-
-/// @brief: assignment operator overload for wrapping struct can_frame
-///         does not get a timestamp.
-CanFrame& CanFrame::operator=(const struct can_frame &frame)
-{
-  can_id  = frame.can_id;
-  can_dlc = frame.can_dlc;
-  padding = frame.__pad;
-  reserve0 = frame.__res0;
-  reserve1 = frame.__res1;
-  memcpy(data, frame.data, 8);
-
-  return *this;
-}
-
-
-/// @brief: assignment operator for copying one CanFrame object to another.
-CanFrame & CanFrame::operator=(const CanFrame &frame)
-{
-  can_id = frame.can_id;
-  can_dlc = frame.can_dlc;
-  padding = frame.padding;
-  reserve0 = frame.reserve0;
-  reserve1 = frame.reserve1;
-  timestamp = frame.timestamp;
-  memcpy(data, frame.data, 8);
-
-  return *this;
-}
-
-
-/// @brief: Stream output operator for CanFrame. Allows for printing data frame 
-///         to output stream easily
-std::ostream &operator<<(std::ostream &out, const CanFrame &frame)
-{
-  // don't print something that has no data
-  if (frame.can_id == 0 && frame.can_dlc == 0)
-  {
-    return out;
-  }
-
-  int val = frame.can_dlc;
-  
-  out << "CAN ID: " << "0x" << std::hex << frame.can_id
-      << " | Data Length: " << std::hex << val << "\n";
-
-  out << "[ ";
-
-  for (uint8_t i = 0; i < frame.can_dlc; i++)
-  {
-    val = frame.data[i];
-    out << std::to_string(i) << ": " << std::hex << val;
-    
-    if (i != frame.can_dlc - 1)
-    {
-      out << " | ";
-    }
-  }
-
-  out << "]\n";
-  return out;
-}
