@@ -6,7 +6,7 @@
 #include <exception>
 #include <iostream>
 #include <vector>
-
+#include <mutex>
 
 // user includes here
 #include "canframe.h"
@@ -44,6 +44,9 @@ public:
   // this defeats the purpose of the whole inheritance thing...
   virtual void Open(uint8_t dev_idex=0, uint32_t baud_rate=500000) = 0;
   virtual void Close() = 0;
+
+protected:
+  std::mutex read_mtx;
   
 };
 

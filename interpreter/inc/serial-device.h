@@ -181,6 +181,7 @@ public:
         std::cout << port_idx << " is not a valid port number.\n";
       }
     }
+    return QSerialPortInfo();
   }
 
 

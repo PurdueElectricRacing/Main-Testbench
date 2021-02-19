@@ -21,6 +21,8 @@
 #include <memory>
 #include <QIODevice>
 #include <QCoreApplication>
+#include <QTimer>
+#include <QDebug>
 
 extern FILE *yyin;
 extern std::string infilename;
@@ -173,9 +175,14 @@ Object * Perterpreter::getObject(Node * node, SymbolTable * scope)
       }
       else if (exp->node_type == index_node)
       {
-        // fetch the value at provided index
-        ret =  perterpretExp(exp->children[0], scope);
+        // return the index key
+
+        Node * idx = exp->children[0];
+        Integer * val = static_cast<Integer *>(perterpretExp(idx, scope));
+        ret = new Integer(msg->get(val->value));
+
         intermediate_operands.emplace(ret);
+        intermediate_operands.emplace(val);
       }
     }
   }
@@ -265,6 +272,7 @@ Object * Perterpreter::perterpretBinaryOp(Node * node, SymbolTable * scope)
 Object * Perterpreter::perterpretExp(Node * node, SymbolTable * scope)
 {
   Object * ret = 0;
+  Integer * i = 0;
   // binary operator  
   if (node->children.size() == 2)
   {
@@ -282,8 +290,32 @@ Object * Perterpreter::perterpretExp(Node * node, SymbolTable * scope)
   }
   else if (node->node_type == unary_math_node)
   {
-    Object * o = getObject(node->children[0], scope);
-    Integer * i = new Integer(unaryMath(o, node->data.strval));
+    Node * object = node->children[0];
+    Object * o = 0;
+
+    // if there are multiple children then the node must be a can object
+    if (object->children.size() > 0)
+    {
+      Node * child_2 = object->getChild(index_node);
+
+      if (child_2)
+      {
+        Node * idx_node = child_2->children[0];
+        // get the can-message variable 
+        CAN_Msg * msg = static_cast<CAN_Msg *>(scope->getObject(object->data.strval));
+        // get the index value
+        i = static_cast<Integer *>(getObject(idx_node, scope));
+        int val = msg->get(i->value);
+        msg->setData(i->value, unaryMath(val, node->data.strval));    
+        i = new Integer(msg->get(i->value));    
+      }
+    }
+    // if it's not a special can-message access then just do normal object creation and stuff
+    else
+    {
+      o = getObject(object, scope);
+      i = new Integer(unaryMath(o, node->data.strval));
+    }
     intermediate_operands.emplace(i);
     ret = i;
   }
@@ -309,6 +341,10 @@ void Perterpreter::perterpretDelay(Node * node, SymbolTable * scope)
     Integer * i = static_cast<Integer *>
                   (perterpretExp(node->children[0], scope));
     delayval = i->value;
+  }
+  if (verbose)
+  {
+    qDebug() << "\nDelaying execution for" << delayval << "ms";
   }
 
   std::this_thread::sleep_for(std::chrono::milliseconds(delayval));
@@ -522,8 +558,10 @@ void Perterpreter::perterpretNode(Node * node, SymbolTable * scope)
         exit(0);
         break;
       case (serial_tx):
+        perterpretSerialTx(child, scope);
         break;
       case (serial_rx):
+        perterpretSerialRx(child, scope);
         break;
       case (prompt_node):
         perterpretPrompt(child, scope);
@@ -541,8 +579,10 @@ void Perterpreter::perterpretNode(Node * node, SymbolTable * scope)
         perterpretAwrite(child, scope);
         break;
       case (send_msg_node):
+        perterpretSendMsg(child, scope);
         break;
       case (read_msg_node):
+        perterpretReadMsg(child, scope);
         break;
       case (if_node):
         perterpretIf(child, scope);
@@ -728,6 +768,14 @@ void Perterpreter::perterpretSendMsg(Node * node, SymbolTable * scope)
   Node * msgnode = node->children[1];
   Integer * address = static_cast<Integer *>(getObject(addrnode, scope));
   CAN_Msg * msg = static_cast<CAN_Msg *>(getObject(msgnode, scope));
+  std::stringstream ss;
+  ss << std::hex << address->value;
+
+  if (verbose)
+  {
+    qDebug() << "\nSending" << QString(msg->toString().c_str()) << "from" 
+             << QString(("0x" + ss.str()).c_str()); 
+  }
 
   can_if->writeCanData(address->value, msg->Len(), msg->Data());
 }
@@ -739,8 +787,50 @@ void Perterpreter::perterpretReadMsg(Node * node, SymbolTable * scope)
 {
   Node * addrnode = node->children[0];
   Integer * address = static_cast<Integer *>(getObject(addrnode, scope));
-  // TODO figure out how to read a specific address
-  // have a 
+  CAN_Msg * msg = 0;
+  QTimer read_timer;
+  std::stringstream ss;
+
+  if (verbose)
+  {
+    ss << std::hex << address->value;
+    // go ahead and read once, then set a timer for later
+    qDebug() << "\nReading from CAN bus. Expecting to receive a message from" 
+             << QString(("0x" + ss.str()).c_str());  // this is whack yo
+  }
+
+  CanFrame frame = can_if->readCanData();
+
+  // start a timer for reading the message
+  read_timer.start(CAN_READ_TIMER_TIMEOUT);
+
+  while (frame.can_id != address->value && read_timer.remainingTime() > 0)
+  {
+    frame = can_if->readCanData();
+  }
+
+  read_timer.stop();
+  msg = new CAN_Msg(frame);
+
+  scope->setObject("RETVAL", msg);
+
+  if (frame.can_id != address->value)
+  {
+    std::cerr << "\nNo message received from " << std::hex << address->value << "\n";
+    // TODO print that no valid can message arrived
+  }
+
+  if (frame.can_dlc > 0 && frame.can_id != 0)
+  {
+    if (verbose)
+    {
+      ss.str("");  
+      ss << std::hex << frame.can_id;
+      std::cout << "\nRead message " << frame << " from " 
+                << "0x" + ss.str() << "\n";
+    }
+  }
+  // TODO figure out how to display the messages to the test bench here if its being used
 }
 
 
@@ -775,8 +865,8 @@ int main (int argc, char ** argv)
     1000000
   };
 
-  bool verbose = false, syntax_check = false;
-  bool good_syntax = false;
+  bool verb = false, syntax_check = false;
+  bool good_syntax = false, no_gpio = false;
   int baud = 500000;
 try
 {
@@ -798,7 +888,7 @@ try
     
     ("v,verbose", 
      "Enable verbose printing of all script commands",
-     value<bool>(verbose))
+     value<bool>(verb))
     
     ("h,help", "Print help message")
     
@@ -818,7 +908,7 @@ try
      "Create a sample .pers file and put it in <dest>.", 
      value<std::string>(sdest))
 
-    ("V,validate-syntax", "if this switch is passed, the interpreter will not" 
+    ("V,validate-syntax", "If this switch is passed, the interpreter will not" 
                           "execute. It will instead only perform syntax parsing"
                           " and type checking. This is useful for checking "
                           "scripts before actually running them if you don't "
@@ -838,9 +928,15 @@ try
                         "not run any. See -T for examples, as the syntax is "
                         "the same. The order specified will be the order scripts are run in", 
                         value<std::vector<std::string> >(routines_to_run))
-    ("b,baud", "the baud rate to use for the CAN device (only makes an impact"
+    ("b,baud", "The baud rate to use for the CAN device (only makes an impact"
                " on windows. If on Linux, use the `setup_can.sh` script)",
                value<int>(baud))
+    ("no-gpio", "Passing this switch will disable the requirement for selecting"
+                "a serial GPIO device. Only use this if your script makes no "
+                "calls to pin read or write functions. If one of these "
+                "functions is called with this switch passed, an exception "
+                "will be thrown and the program will terminate.",
+                value<bool>(no_gpio))
     
     ;
   
@@ -853,6 +949,10 @@ try
     exit(0);
   }
 
+  if (verb)
+  {
+    p.setVerbose(true);
+  }
   // -g command provided
   if (cmdline.count("g"))
   {
@@ -929,10 +1029,15 @@ try
   {
     p.setGpioDev(io);
   }
-  else
+  else if (!no_gpio)
   {
     std::cout << "\n\nNo GPIO device was specified. Choose one from the list below\n\n";
     p.selectGpioDev();
+  }
+  else
+  {
+    std::cout << "\n\n no-gpio switch specified. Any calls to pin read or write"
+                 " functions will throw exceptions.\n";
   }
 
   candev = NewCanDevice(baud);
@@ -954,7 +1059,7 @@ try
 }
 catch (std::exception& e)
 {
-  std::cout << e.what() << "\n";
+  std::cerr << "Exception raised: " << e.what() << "\n";
 }
   
 }

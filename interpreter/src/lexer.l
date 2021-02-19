@@ -195,8 +195,8 @@ length {
   return integerLiteral;
 }
 
-0[Xx]([0-9AaBbCcDdEeFf]){1,3} {
-  yylval.i = std::stoi(yytext);
+0[Xx]([0-9AaBbCcDdEeFf])+ {
+  yylval.i = std::stoul(yytext, 0, 16);
   return hexLiteral;
 }
 

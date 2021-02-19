@@ -192,6 +192,7 @@ else
     - `-R, --run-routines`: This is a list of routines to run if you want to run any of them. Default behavior is to not run any.
       - For -R and -T, the order specified will be the order scripts are run in
     - `-b --baud`: the baud rate to use for the CAN device (only makes an impact on windows. If on Linux, use the `setup_can.sh` script). Defaults to 500kB
+    - `--no-gpio`: Passing this switch will disable the requirement for selecting a serial GPIO device. Only use this if your script makes no calls to pin read or write functions. If one of these functions is called with this switch passed, an exception will be thrown and the program will terminate.
 
 
 

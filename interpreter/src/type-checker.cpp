@@ -283,7 +283,6 @@ obj_t checkVardecl(Node * node, SymbolTable * currscope)
   }
 
   o = currscope->getObject(varname);
-  currscope->setObject(varname, ObjectFactory::createObject(exp, exptype));
 
   // if there are children it must be a can object
   if ((member_access = node->getChild(length_node)) 
@@ -303,6 +302,10 @@ obj_t checkVardecl(Node * node, SymbolTable * currscope)
       return invalid;
     }
     exptype = integer;
+  }
+  else
+  {
+    currscope->setObject(varname, ObjectFactory::createObject(exp, exptype));
   }
   return exptype;
 }

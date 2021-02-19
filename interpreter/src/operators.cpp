@@ -69,6 +69,23 @@ int unaryMath(Node * o, std::string op)
   return o->data.intval;
 }
 
+int unaryMath(int o, std::string op)
+{
+  if (op == "++")
+  {
+    return o + 1;
+  }
+  else if (op == "--")
+  {
+    return o - 1;
+  }
+  else if (op == "-")
+  {
+    return -o;
+  }
+  return o;
+}
+
 
 
 

@@ -132,7 +132,11 @@ CanFrame SocketCanDevice::readCanData()
   if (rv > 0)
   {
     errno = 0;
+    
+    read_mtx.lock();
     nbytes = read(can_socket_fd, &frame, sizeof(struct can_frame));
+    read_mtx.unlock();
+
     if (nbytes < 0)
     {
       perror("SocketCanDevice::readCanData:can raw socket read");

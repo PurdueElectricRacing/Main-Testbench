@@ -31,10 +31,10 @@ test "hello this is a test script" {
   
 
   cars = 'this is okay too';
-  delay 5000;
-  set-pin DOUT 0 HIGH; // ok
+  // delay 5000;
+  // set-pin DOUT 0 HIGH; // ok
 
-  delay 3000;
+  // delay 3000;
 
   // set-pin DOUT Var1 HIGH;    // invalid (not integer for pin)
 
@@ -42,10 +42,10 @@ test "hello this is a test script" {
 
   // expect GT 6 and LT 0|0|0;  // invalid (not comparing the same data type) 
   // expect GT 6 and EQ 0|0|0;  // invalid (not comparing the same data type) 
-  read-pin DIN 4;
-  read-pin AIN 4;
-  exit;
-  expect RETVAL EQ 5 + 6 + 90 / 32;  // ok
+  // read-pin DIN 4;
+  // read-pin AIN 4;
+  // exit;
+  // expect RETVAL EQ 5 + 6 + 90 / 32;  // ok
   
   // expect EQ 5 + 6 + 90 / 32 + Var1; // error previous call returns an int
   // expect EQ 00|0F|55;  
@@ -71,32 +71,49 @@ test "hello this is a test script" {
     println "Boo";
   }
 
-  set-pin DOUT 69 HIGH;
-  set-pin DOUT 69 LOW;
-  set-pin DOUT 69 HIGH;
-  delay 10000;
-  read-pin DIN 4 ;  // read-x would store return result in some static variable
+  // set-pin DOUT 69 HIGH;
+  // set-pin DOUT 69 LOW;
+  // set-pin DOUT 69 HIGH;
+  // delay 10000;
+  // read-pin DIN 4 ;  // read-x would store return result in some static variable
                     // which would then be accessible forever by EXPECT and ASSERT
 
 
   // expect RETVAL GT 6; // 
-  prompt "Do some fancy stuff";
+  // prompt "Do some fancy stuff";
 
   // assert RETVAL GT 6;
 
-  call "this is a routine test";
+  // call "this is a routine test";
   
   println "var3 = " + var3;
   
   
   can = 00|0f|69;
-  loop var3 > 45 
+  var3 = 10;
+  loop var3 > 6 
   {
     
     var1 = "string";
-
+    println "Message to send: " + can;
+    // TODO figure out why array accesses aren't working
     can[0]++;
-    expect RETVAL == 50;
+
+    // can[0] = 45;  
+    println "can[0] = " + can[0];
+    // expect RETVAL == 50;
+    delay 200;
+    addr = 0x420;
+    println "CAN Address: " + addr;
+    send-msg addr 00|0f|69;
+    delay 200;
+    send-msg 0x69 can;
+    delay 200;
+    send-msg addr can;
+    delay 200;
+
+    read-msg 0x421;
+    read-msg addr;
 
     if (1 < 2)
     {

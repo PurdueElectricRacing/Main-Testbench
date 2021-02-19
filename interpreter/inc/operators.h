@@ -16,6 +16,7 @@ int math(Node * lhs, Node * rhs, std::string op);
 
 int unaryMath(Object * o, std::string op);
 int unaryMath(Node * o, std::string op);
+int unaryMath(int o, std::string op);
 
 
 bool compare(Object * lhs, Object * rhs, std::string op);

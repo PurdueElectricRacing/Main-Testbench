@@ -150,9 +150,12 @@ CanFrame WindowsCandleDev::readCanData()
 {
   candle_frame_t frame;
   CanFrame ret;
+  read_mtx.lock();
+  bool frame_read = candle_frame_read(hdev, &frame, 500);
+  read_mtx.unlock();
   
   // read from the device
-  if (candle_frame_read(hdev, &frame, 500))
+  if (frame_read)
   {
     // make sure there wasn't an error when reading
     if (candle_frame_type(&frame) == CANDLE_FRAMETYPE_RECEIVE)

@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <exception>
 #include <iostream>
+#include "canframe.h"
 
 
 class CAN_Msg : public Object
@@ -22,6 +23,12 @@ public:
     memset(data, 0, 8);
   };
 
+  CAN_Msg(CanFrame frame) {
+    len = frame.can_dlc;
+    memcpy(data, frame.data, frame.can_dlc);
+    valid = true;
+  };
+
   virtual ~CAN_Msg(){};
 
   void parse(std::string input)
@@ -34,8 +41,10 @@ public:
     while (last_sep != std::string::npos)
     {
       std::string byteval = input.substr(0, last_sep);
+      uint val = 0;
       input.erase(0, last_sep + 1);
-      int val = std::stoi(byteval);
+      byteval = "0x" + byteval;
+      val = std::stoul(byteval, 0, 16);
 
       if (val > 0xFF)
       {
@@ -50,7 +59,8 @@ public:
     }
     if (!input.empty())
     {
-      data[i] = std::stoi(input);
+      input = "0x" + input;
+      data[i] = std::stoul(input, 0, 16);;
     }
     valid = true;
     len = i + 1;
@@ -66,11 +76,13 @@ public:
 
   virtual std::string stringify() { 
     std::string ret;
-    std::stringstream ss;
 
     for (size_t i = 0; i < 8; i++)
     {
-      ss << std::hex << data[i];
+      // do not move this variable out of the loop
+      // it needs re-init every iteration
+      std::stringstream ss;
+      ss << std::hex << (uint) data[i];
       ret += ss.str();
       if (i < 7)
         ret += "|";
@@ -114,8 +126,26 @@ public:
     return -1;
   };
 
+  std::string toString()
+  {
+    std::string ret = "[";
+    for (uint8_t i = 0; i < len; i++)
+    {
+      ret += " " + std::to_string(data[i]);
+    }
+
+    ret += " ]";
+    return ret;
+  }
+
   uint8_t * Data() { return data; };
   uint8_t Len() { return len; };
+
+  std::ostream& operator<<(std::ostream &stream)
+  {
+    stream << toString();
+    return stream;
+  }
 
 private:
   uint8_t data[8];

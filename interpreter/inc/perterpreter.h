@@ -13,7 +13,9 @@
 #include <iostream>
 #include <fstream>
 #include <QSerialPort>
+#include <map>
 
+#define CAN_READ_TIMER_TIMEOUT 1500 // msecs to wait for a specific message to arrive
 
 class Perterpreter
 {
@@ -74,6 +76,7 @@ public:
   bool setGpioDev(std::string dev) { return gpio_device->setSerialDevice(dev);};
   bool setSerialDev(std::string dev) {return serial_device->setSerialDevice(dev);};
   void setCanInterface(CanInterface * itf) { can_if = itf; };
+  // TODO Create a pointer to a global buffer here for if interpreter is being used by test bench so it can still do live can logging
   void selectGpioDev();
   bool performSyntaxAnalysis(std::filesystem::path filepath);
 
@@ -115,6 +118,7 @@ private:
   Tests *tests = 0;
   SymbolTable * global_table = 0;
    
+  std::map<int, CanFrame> * data_map;
   std::string serial_log_file;
   std::string log_file;
   SerialDevice *serial_device;
