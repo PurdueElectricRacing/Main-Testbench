@@ -10,17 +10,13 @@ CONFIG += c++17 debug
 OBJECTS_DIR = objs/
 
 SOURCES += \
-    ./src/main.cpp \
-    ./src/pervertt_main_frame.cpp \
-    ./src/can_interface.cpp \
-  src/manual_controls.cpp
+    src/main.cpp \
+    src/pervertt_main_frame.cpp \
+    src/manual_controls.cpp \
 
 HEADERS += \
   inc/pervertt_main_frame.h \
-  inc/can_interface.h \
   inc/manual_controls.h \
-  inc/can_parsing.h \
-  inc/exceptions.hpp \
   
 
 FORMS += \
@@ -28,7 +24,8 @@ FORMS += \
 
 CONFIG += qtc_runnable
 
-INCLUDEPATH += ./inc /usr/share /usr/local /usr/include
+INCLUDEPATH += $$PWD/inc \
+
 
 target.path = /home/testbench/pervertt
 
@@ -36,3 +33,5 @@ target.path = /home/testbench/pervertt
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /home/pi/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+include($$PWD/DesktopCAN_API/canapi.pri)

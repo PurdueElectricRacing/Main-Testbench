@@ -78,7 +78,8 @@
         "typeindex": "cpp",
         "typeinfo": "cpp",
         "variant": "cpp",
-        "qdebug": "cpp"
+        "qdebug": "cpp",
+        "qcoreapplication": "cpp"
     },
     "cSpell.words": [
         "denkmair"

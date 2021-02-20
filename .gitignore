@@ -90,3 +90,5 @@ lexer.*
 *.o
 build
 perterpreter
+compile_commands*
+package-lock.json

@@ -1,3 +1,6 @@
 [submodule "modules/serial"]
 	path = modules/serial
 	url = https://github.com/wjwwood/serial.git
+[submodule "DesktopCAN_API"]
+	path = DesktopCAN_API
+	url = https://github.com/PurdueElectricRacing/DesktopCAN_API.git
